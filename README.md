@@ -16,18 +16,49 @@ Architecture:
 |                                         |
 |+++++++++++++++++++++++++++++++++++++++++|
 
+====================================================================
 MySQL DB:
 user: |userid : username|
 msg : |timestamp : from : to : text|
 
-Client:
-client consists of three pthreads: 
+In the server program, we use 3-tier architecture. 
+Model:
+          struct user
+          {
+                    string userid;
+                    string username;
+          };
+          struct msg
+          {
+                    int timestamp;
+                    string from;
+                    string to;
+                    string text;
+          }
+
+DAL:
+          class CMYSQL_Singleton
+          {
+                    
+          };
+
+BSS:
+          class UserOperation
+          {
+                    // for validation
+          };
+          class MsgOperation
+          {
+                    // for pushing msg
+          };
+
+====================================================================
+Client: client consists of three pthreads: 
 thread 0: polling (UDP)
 thread 1: listening for new msg (TCP)
 thread 2: waiting for input, and sending the input to the server.
 
-Server v1:
-serverv v1 is syncronized, and consists of two pthread:
+Server v1: serverv v1 is syncronized, and consists of two pthread:
 thread 0: read polling packets (UDP recvfrom, BLOCKING)
           pthread_create
           {
@@ -42,9 +73,9 @@ thread 1: listening for the sent msg from client.
             }
           }
           
+====================================================================
 
-Server v2:
-v2 leverages epoll, based on event. 
+Server v2: v2 leverages epoll, based on event. 
 thread 0: read polling packets. (BLOCKING)
           pthread_create
           {
@@ -61,6 +92,8 @@ thread 0: read polling packets. (BLOCKING)
 
 Server v3"
 using UNBLOCK UDP socket, and recv polling packets by epoll.
+
+====================================================================
 
 FUTURE IMPROVE:
 0  eliminate pthread both in client and server. 
