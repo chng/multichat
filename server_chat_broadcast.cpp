@@ -24,6 +24,7 @@ thread 1:
 
 */
 #include <mysql>
+
 #include <unistd.h>
 #include <iostream>
 #include <stdio.h>
@@ -89,6 +90,4 @@ void initialize()
 	
 
 }
-
-
 
