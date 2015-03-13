@@ -5,13 +5,16 @@ chat_broadcast consists of a server, a remote mysql db and client.
 Each client will receive the latest msg sent from any other clients .
 
 Architecture:
-
-        |--------|         |--------|
-        | server | <====>  |  MySQL |
-        |________|         |________|
-hello /|     |hello \   hello
-    /       \|/       \|
-client0    client1    client2
+|+++++++++++++++++++++++++++++++++++++++++|
+|                                         |
+|         |--------|         |--------|   |
+|         | server | <====>  |  MySQL |   |
+|         |________|         |________|   |
+| hello /|     |hello \   hello           |
+|     /       \|/       \|                |
+| client0    client1    client2           |
+|                                         |
+|+++++++++++++++++++++++++++++++++++++++++|
 
 MySQL DB:
 user: |userid : username|
@@ -59,3 +62,7 @@ thread 0: read polling packets. (BLOCKING)
 Server v3"
 using UNBLOCK UDP socket, and recv polling packets by epoll.
 
+FUTURE IMPROVE:
+0  eliminate pthread both in client and server. 
+1  proxy between several servers and the clients.
+2  proxy between the servers and the mysql server cluster.
