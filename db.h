@@ -1,20 +1,34 @@
+#ifndef __MYSQL_H
 #include <mysql.h>
+#endif
+#ifndef __STRING_H
 #include <string.h>
+#endif
+#ifndef __STDIO_H
 #include <stdio.h>
+#endif
+#ifndef __STDLIB_H
 #include <stdlib.h>
-#include <iostream>
+#endif
+#ifndef __TIME_H
 #include <time.h>
+#endif
 
 using namespace std;
 
 /* Model */
+#ifndef MODEL_USER
+#define MODEL_USER
 struct user
 {
 	char *userid;
 	char *username;
 	char *password;
 };
+#endif
 
+#ifndef MODEL_MSG
+#define MODEL_MSG
 struct msg
 {
 	bool status;
@@ -23,8 +37,11 @@ struct msg
 	char *userto;
 	char *text;
 };
+#endif
 
 /* DAL */
+#ifndef DAL_CMYSQL
+#define DAL_CMYSQL
 class CMYSQL
 {
 	MYSQL *conn;
@@ -34,7 +51,7 @@ class CMYSQL
 	char *dbname;
 	unsigned int port;
 	bool isconn;
-	static CMYSQL* pmysql;
+	static CMYSQL *pmysql;
 
 	CMYSQL( const char *__dbhost, 
 		const char *__username,
@@ -127,8 +144,11 @@ public:
 };
 CMYSQL * CMYSQL::pmysql = NULL;
 
+#endif
 
 /* BLL */
+#ifndef BLL_USERACTION
+#define BLL_USERACTION
 class UserAction
 {
 	CMYSQL * pmysql;
@@ -158,7 +178,10 @@ public:
 		return false;
 	}
 };
+#endif
 
+#ifndef BLL_MSGACTION
+#define BLL_MSGACTION
 class MsgAction
 {
 	CMYSQL * pmysql;
@@ -205,14 +228,14 @@ public:
 		return false;
 	}
 };
+#endif
 
-
-
+/*
 main()
 {
 	UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+	//MsgAction ma;
 	MsgAction ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
-
 	cout <<ua.login("1024", "123")<<endl;
 	cout <<ua.login("2048", "123")<<endl;
 	cout <<ma.insertNewMsg("1024", "*", "this is a test for insertion")<<endl;
@@ -223,5 +246,5 @@ main()
 	}
 }
 
-
+*/
 

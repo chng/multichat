@@ -23,7 +23,6 @@ thread 1:
 	
 
 */
-#include <mysql.h>
 
 #include <unistd.h>
 #include <iostream>
@@ -37,8 +36,10 @@ thread 1:
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
+#include "db.h"
 
 using namespace std;
+
 
 void echo_poll(int fd, sockaddr* pcliaddr, socklen_t len_client)
 {
@@ -51,17 +52,19 @@ void echo_poll(int fd, sockaddr* pcliaddr, socklen_t len_client)
 		n = recvfrom(fd, buf, sizeof(buf), 0, pcliaddr, &lenaddr);
 		if(n<=0)
 			continue;
-		char msg[10], userid[256];
-		unsigned short port;
-		sscanf(buf, "%s:%s:%d", msgtype, userid, port);
+		char msgtype[10], userid[256];
+		int port;
+		sscanf(buf, "%s:%s:%d", msgtype, userid, &port);
 		if(strcmp(msgtype, "poll")==0)
 		{
+			/*
 			//select * from msg where to=useris and stat='unread';
 			if(has new msg)
 			{
 				pcliaddr->sin_port = port;
 				send by TCP: ip, port
 			}
+			*/
 		}
 		
 	}
@@ -87,7 +90,7 @@ int main(int argc, char ** argv)
 
 void initialize()
 {
-	
-
+	UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+	MsgAction ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 }
 
