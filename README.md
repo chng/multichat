@@ -16,12 +16,28 @@ Architecture:
 |                                         |
 |+++++++++++++++++++++++++++++++++++++++++|
 
+
+====================================================================
+
+Sinple Protocol:
+
+poll:
+        poll:userid:password:listen_port(network order)
+
+newmsg:
+        newmsg:timestamp:userfrom:text
+
+sendmsg:
+        wrmsg:userid:password:text
+
+
 ====================================================================
 MySQL DB:
+
 user: |userid : username|
 msg : |timestamp : from : to : text|
 
-In the server program, we use 3-tier architecture. 
+In the server program, we use <b>3-tier architecture</b>. 
 Model:
           struct user
           {
@@ -37,6 +53,7 @@ Model:
           }
 
 DAL:
+	  //this is a <b>singleton</b> class, thus it is shared by BLL classes.
           class CMYSQL_Singleton
           {
                     
@@ -53,7 +70,7 @@ BSS:
           };
 
 ====================================================================
-Client: client consists of three pthreads: 
+Client: client consists of <b>three pthreads</b>: 
 thread 0: polling (UDP)
 thread 1: listening for new msg (TCP)
 thread 2: waiting for input, and sending the input to the server.
@@ -72,6 +89,8 @@ thread 1: listening for the sent msg from client.
               insert to the DB.
             }
           }
+thread 2:waiting for input, and send the input as wrmsg.
+	 
           
 ====================================================================
 
