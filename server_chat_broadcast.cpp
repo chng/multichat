@@ -56,7 +56,7 @@ static MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 struct sockaddr_in serv_addr_poll;
 struct sockaddr_in serv_addr_listen;
 struct sockaddr_in client_addr_send; // recv new msg from this addr 
-struct sockaddr_in client_addr_recv; // send to this addr when there is new msg. address is within client_addr_poll, and port i  within the poll packet.
+struct sockaddr_in client_addr_listen; // send to this addr when there is new msg. address is within client_addr_poll, and port i  within the poll packet.
 
 static int fd_udp_poll = -1;  // UDP port, listen for polling
 static int fd_tcp_send = -1;  // TCP port, sending msg
@@ -69,6 +69,7 @@ static int serv_port_listen = 9002;
 
 void initialize(const int __serv_port_poll, const int __serv_port_listen);
 void* run_poll_handler(void *param);
+void *run_recv_wrmsg(void * param);
 int writen(int fd, char * buf, size_t len);
 int readn(int fd, char * buf, size_t len);
 
@@ -76,11 +77,13 @@ int readn(int fd, char * buf, size_t len);
 int main(int argc, char ** argv)
 {
 	initialize(serv_port_poll, serv_port_listen);
-	pthread_t tid0;
+	pthread_t tid0, tid1;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_create(&tid0, &attr, run_poll_handler, NULL);
+	pthread_create(&tid1, &attr, run_recv_wrmsg, NULL);
 	pthread_join(tid0, NULL);
+	pthread_join(tid1, NULL);
 }
 
 
@@ -100,18 +103,24 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 	if( bind(fd_udp_poll, (sockaddr*)&serv_addr_poll, sizeof(sockaddr_in)) )
 	{
 		cerr <<"fd_udp_poll bind error. fd = "<<fd_udp_poll<<"\n";
-		pthread_exit(0);
+		exit(0);
 	}
 	bzero(&serv_addr_listen, sizeof(sockaddr_in));
 	serv_addr_listen.sin_family = AF_INET;
 	serv_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr_poll.sin_port = serv_port_listen;
 	fd_tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
+	if( bind(fd_tcp_listen, (sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)) )
+	{
+		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
+		exit(0);
+	}
 }
 
 
 void* run_poll_handler(void *param)
 {
+	cout <<"run_poll_handler is runing"<<endl;
 	int n;
 	socklen_t lenaddr = sizeof(sockaddr_in);
 	struct sockaddr_in client_addr_poll;
@@ -143,14 +152,13 @@ void* run_poll_handler(void *param)
 				cerr <<"failed to load new msg."<<endl; 
 				continue;
 			}
-			cout <<latest_msg[0].timestamp<<" "<<latest_msg[0].userfrom<<endl;
 			if(latest_msg[0].timestamp)
 			{
-				client_addr_recv.sin_family = AF_INET;
-				client_addr_recv.sin_addr = client_addr_poll.sin_addr;
-				client_addr_recv.sin_port = client_port_listen;
+				client_addr_listen.sin_family = AF_INET;
+				client_addr_listen.sin_addr = client_addr_poll.sin_addr;
+				client_addr_listen.sin_port = client_port_listen;
 				fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
-				if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_recv, sizeof(sockaddr_in)) )
+				if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)) )
 				{
 					char buf[4096];
 					for(int i=0; latest_msg[i].timestamp; i++)
@@ -167,6 +175,34 @@ void* run_poll_handler(void *param)
 	}
 }
 
+void *run_recv_wrmsg(void * param)
+{
+	cout <<"run_recv_wrmsg is runing"<<endl;
+	if( listen(fd_tcp_listen, 65535) )
+	{
+		cerr <<"fd_tcp_listen error"<<endl;
+		pthread_exit(0);
+	}
+	 
+	int n;
+	socklen_t lenaddr = sizeof(sockaddr_in);
+	char buf[4096];
+	while(1)
+	{
+		lenaddr = sizeof(sockaddr_in);
+		int connfd = accept(fd_tcp_listen, (sockaddr*)&client_addr_send, &lenaddr);
+		if(readn(connfd, buf, sizeof(buf)) == 0)
+		{
+			cout <<buf<<endl;
+			char msgtype[10], userid[256], password[256], text[4096];
+			const char *userto = "*";
+			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, text);
+			if(ua.login(userid, password))
+				ma.insertNewMsg(userid, userto, text);
+		}
+		close(connfd);
+	}
+}
 
 int writen(int fd, char * buf, size_t len)
 {

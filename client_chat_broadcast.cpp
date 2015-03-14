@@ -82,7 +82,7 @@ unsigned short serv_port_poll = 9001;
 unsigned short serv_port_listen = 9002;
 
 struct sockaddr_in serv_addr_poll;     // UDP listen port
-struct sockaddr_in serv_addr_recv;     // TCP listen port
+struct sockaddr_in serv_addr_listen;     // TCP listen port
 struct sockaddr_in client_addr_listen; // TCP listen port
 
 int sleep_poll = 2;
@@ -105,20 +105,26 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 	client_port_listen =  htons( __client_port_listen );
 
 	
-	bzero(&serv_addr_poll, sizeof(serv_addr_poll));
+	bzero(&serv_addr_poll, sizeof(sockaddr_in));
 	serv_addr_poll.sin_family = AF_INET;
 	inet_pton(AF_INET, serv_ip, &serv_addr_poll.sin_addr);
 	serv_addr_poll.sin_port = serv_port_poll;
 
-	bzero(&serv_addr_recv, sizeof(serv_addr_recv));
-	serv_addr_recv.sin_family = AF_INET;
-	inet_pton(AF_INET, serv_ip, &serv_addr_recv.sin_addr);
-	serv_addr_recv.sin_port = serv_port_listen;
+	bzero(&serv_addr_listen, sizeof(sockaddr_in));
+	serv_addr_listen.sin_family = AF_INET;
+	inet_pton(AF_INET, serv_ip, &serv_addr_listen.sin_addr);
+	serv_addr_listen.sin_port = serv_port_listen;
 
-	bzero(&client_addr_listen, sizeof(client_addr_listen));
+	bzero(&client_addr_listen, sizeof(sockaddr_in));
 	client_addr_listen.sin_family = AF_INET;
 	client_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
 	client_addr_listen.sin_port = client_port_listen;
+	fd_tcp_listen = socket(PF_INET, SOCK_STREAM, 0);
+	if( bind(fd_tcp_listen, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)))
+	{
+		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
+		exit(0);
+	}
 }
 
 
@@ -164,12 +170,7 @@ void * run_thread_0(void *param)
 void * run_thread_1(void *param)
 {
 	cout <<"thread listen running"<<endl;
-	fd_tcp_listen = socket(PF_INET, SOCK_STREAM, 0);
-	if( bind(fd_tcp_listen, (const sockaddr*)&client_addr_listen, sizeof(client_addr_listen)))
-	{
-		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
-		pthread_exit(0);
-	}
+
 	if (listen(fd_tcp_listen, 65535) )
 	{
 		cerr <<"fd_tcp_listen listen error fd = "<<fd_tcp_listen<<"\n";
@@ -182,7 +183,7 @@ void * run_thread_1(void *param)
 	while(1)
 	{
 		int connfd = accept(fd_tcp_listen, (sockaddr*)&serv_addr_send, &lenaddr);
-		close(fd_tcp_listen);
+		//close(fd_tcp_listen);
 		do
 		{
 			while( (n = read(connfd, buf, sizeof(buf))) > 0 )
@@ -204,10 +205,9 @@ void * run_thread_2(void *param)
 		strcat(buf, ":");
 		strcat(buf, password);
 		strcat(buf, ":");
-		cin >> (buf+strlen(buf));
-		cout <<buf<<endl;
-		fd_tcp_send = socket(PF_INET, SOCK_STREAM, 0);
-		if(0 == connect(fd_tcp_send, (const sockaddr*)&serv_addr_recv, sizeof(serv_addr_recv)))
+		cin.getline(buf+strlen(buf), sizeof(buf)-strlen(buf));
+		fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
+		if( !connect(fd_tcp_send, (const sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)))
 		{
 			if(0 < send(fd_tcp_send, buf, strlen(buf), 0))
 				cout <<"---> "<<buf<<endl;
@@ -215,12 +215,12 @@ void * run_thread_2(void *param)
 				cerr <<"-x-> "<<buf<<endl;
 			//recv(sfd, buf, BUF_SIZE-1, 0);
 			//printf("%s\n", buf);
-			close(fd_tcp_send);
 		}
 		else
 		{
-			cerr << "lost connection"<<endl;
+			cerr <<"no connection"<<endl;
 		}
+		close(fd_tcp_send);
 	}
 }
 
