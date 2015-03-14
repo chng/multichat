@@ -100,3 +100,5 @@ FUTURE IMPROVE:
 1  proxy between several servers and the clients.
 2  proxy between the servers and the mysql server cluster.
 3  msg encryption
+4  setup log module
+

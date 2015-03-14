@@ -97,12 +97,16 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 	serv_addr_poll.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr_poll.sin_port = serv_port_poll;
 	fd_udp_poll = socket(AF_INET, SOCK_DGRAM, 0);
-
+	if( bind(fd_udp_poll, (sockaddr*)&serv_addr_poll, sizeof(sockaddr_in)) )
+	{
+		cerr <<"fd_udp_poll bind error. fd = "<<fd_udp_poll<<"\n";
+		pthread_exit(0);
+	}
 	bzero(&serv_addr_listen, sizeof(sockaddr_in));
 	serv_addr_listen.sin_family = AF_INET;
 	serv_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr_poll.sin_port = serv_port_listen;
-	fd_tcp_listen = socket(AF_INET, SOCK_DGRAM, 0);
+	fd_tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
 }
 
 
@@ -114,7 +118,7 @@ void* run_poll_handler(void *param)
 	char buf[1024];
 	while(1)
 	{
-		cout <<"debug"<<endl;
+		lenaddr = sizeof(sockaddr_in);
 		n = recvfrom(fd_udp_poll, buf, sizeof(buf), 0, (sockaddr*)&client_addr_poll, &lenaddr);
 		if(n<=0)
 		{
@@ -128,7 +132,10 @@ void* run_poll_handler(void *param)
 		if(strcmp(msgtype, "poll")==0)
 		{
 			if( !ua.login(userid, password) ) 
+			{
+				cerr <<"received invalid polling"<<endl;
 				continue;
+			}
 			msg *latest_msg =  ma.getLatestMsg("*");
 			if(latest_msg[0].timestamp)
 			{
@@ -142,6 +149,7 @@ void* run_poll_handler(void *param)
 					for(int i=0; latest_msg[i].timestamp; i++)
 					{
 						sprintf(buf, "newmsg:%d:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom, latest_msg[i].text);
+						cout <<buf<<endl;
 						writen(fd_tcp_send, buf, strlen(buf));
 					}
 				}
