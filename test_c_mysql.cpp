@@ -53,7 +53,7 @@ class CMYSQL
 		strcpy(dbname, __dbname);
 		
 		port = __port;
-		
+		isconn = false;		
 		conn = mysql_init(0);
 	}
 	~CMYSQL()
@@ -89,7 +89,7 @@ public:
 		)
 	{
 		if(!pmysql)
-			pmysql = new CMYSQL (__dbname, __username, __key, __dbname, __port);
+			pmysql = new CMYSQL (__dbhost, __username, __key, __dbname, __port);
 		return pmysql;
 	}
 	CMYSQL *getInstance()
@@ -147,8 +147,12 @@ public:
 		char str_query[100];
 		sprintf(str_query, "select COUNT(*) from user where userid='%s' and key='%s'", userid, key);
 		MYSQL_RES *res = pmysql->query(str_query);
-		MYSQL_ROW row = mysql_fetch_row(res);
-		if(atoi(row[0])) return true;
+		
+		if(res)
+		{
+			MYSQL_ROW row = mysql_fetch_row(res);
+			if(atoi(row[0])) return true;
+		}
 		return false;
 	}
 };
