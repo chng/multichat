@@ -33,7 +33,6 @@ class CMYSQL
 	char *key;
 	char *dbname;
 	unsigned int port;
-	bool isconn;
 	static CMYSQL* pmysql;
 
 	CMYSQL( const char *__dbhost, 
@@ -53,7 +52,6 @@ class CMYSQL
 		strcpy(dbname, __dbname);
 		
 		port = __port;
-		isconn = false;		
 		conn = mysql_init(0);
 	}
 	~CMYSQL()
@@ -99,10 +97,9 @@ public:
 
 	MYSQL * connect()
 	{
-		if(!isconn)
+		if(!conn)
 		{
 			conn = mysql_real_connect(conn, dbhost, username, key, dbname, port, NULL, 0);
-			isconn = 1;
 		}
 		return conn;
 	}
@@ -111,12 +108,11 @@ public:
 	{
 		if(conn)
 			mysql_close(conn);
-		isconn = 0;
 	}
 	
 	MYSQL_RES * query(const char *str_query)
 	{
-		if(!isconn)
+		if(!conn)
 			return NULL;
 		if( mysql_query(conn, str_query) )
 			return NULL;
