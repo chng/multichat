@@ -31,15 +31,16 @@ getInstance	test_c_mysql.cpp	/^	static CMYSQL *getInstance( 	const char *__dbhos
 getLatestMsg	test_c_mysql.cpp	/^	msg* getLatestMsg(const char *userid)$/;"	f	class:MsgAction
 initialize	client_chat_broadcast.cpp	/^void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_recv, int __client_port_listen)$/;"	f
 initialize	server_chat_broadcast.cpp	/^void initialize()$/;"	f
+insertNewMsg	test_c_mysql.cpp	/^	bool insertNewMsg(const char *from, const char *to, const char * text)$/;"	f	class:MsgAction
 isconn	test_c_mysql.cpp	/^	bool isconn;$/;"	m	class:CMYSQL	file:
 key	test_c_mysql.cpp	/^	char *key;$/;"	m	class:CMYSQL	file:
-key	test_c_mysql.cpp	/^	char *key;$/;"	m	struct:user	file:
 login	test_c_mysql.cpp	/^	bool login(const char *userid, const char *key)$/;"	f	class:UserAction
 main	client_chat_broadcast.cpp	/^int main(int argc, char ** argv)$/;"	f
 main	server_chat_broadcast.cpp	/^int main(int argc, char ** argv)$/;"	f
 main	test_c_mysql.cpp	/^main()$/;"	f
 main	test_udp_recv.cpp	/^int main(int argc, char ** argv)$/;"	f
 msg	test_c_mysql.cpp	/^struct msg$/;"	s	file:
+password	test_c_mysql.cpp	/^	char *password;$/;"	m	struct:user	file:
 pmysql	test_c_mysql.cpp	/^	CMYSQL * pmysql;$/;"	m	class:MsgAction	file:
 pmysql	test_c_mysql.cpp	/^	CMYSQL * pmysql;$/;"	m	class:UserAction	file:
 pmysql	test_c_mysql.cpp	/^	static CMYSQL* pmysql;$/;"	m	class:CMYSQL	file:

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-
+#include <time.h>
 
 using namespace std;
 
@@ -18,9 +18,9 @@ struct user
 struct msg
 {
 	bool status;
-	char *timestamp;
-	char *from;
-	char *to;
+	int  timestamp;
+	char *userfrom;
+	char *userto;
 	char *text;
 };
 
@@ -154,6 +154,7 @@ public:
 			MYSQL_ROW row = mysql_fetch_row(res);
 			if(atoi(row[0])) return true;
 		}
+		mysql_free_result(res);
 		return false;
 	}
 };
@@ -175,7 +176,7 @@ public:
 	msg* getLatestMsg(const char *userid)
 	{
 		char str_query[100];
-		sprintf(str_query, "select timestamp, from, to, text from msg where to='%s' and status='1' limit 0, 1000", userid);
+		sprintf(str_query, "select timestamp, userfrom, userto, text from msg where userto='%s' and status='1' limit 0, 1000;", userid);
 		MYSQL_RES *res = pmysql->query(str_query);
 		MYSQL_ROW row;
 		msg *ret = new msg [mysql_field_count(pmysql->connect())+1];
@@ -184,11 +185,24 @@ public:
 		{
 			while( row = mysql_fetch_row(res) )
 			{
-				ret[i++] = {1, row[0], row[1], row[2], row[3]};
+				ret[i++] = {1, atoi(row[0]), row[1], row[2], row[3]};
 			}
 		}
-		ret[i] = {0, NULL, NULL, NULL, NULL};
+		ret[i] = {0, 0, NULL, NULL, NULL};
+		mysql_free_result(res);
 		return ret;
+	}
+	bool insertNewMsg(const char *from, const char *to, const char * text)
+	{
+		char str_query[500];
+		int timestamp = time(0);
+		sprintf(str_query, "insert into msg (timestamp, userfrom, userto, text, status) values ('%d', '%s', '%s', '%s', '1');", timestamp, from, to, text);
+		MYSQL_RES *res = pmysql->query(str_query);
+		if(0 < mysql_affected_rows(pmysql->connect()))
+		{
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -196,10 +210,17 @@ public:
 
 main()
 {
-	UserAction ua("172.12.72.88", "root", "123", "chat_broadcast", 3306);
+	UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 	//MsgAction ma;
+	MsgAction ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 	cout <<ua.login("1024", "123")<<endl;
 	cout <<ua.login("2048", "123")<<endl;
+	cout <<ma.insertNewMsg("1024", "*", "this is a test for insertion")<<endl;
+	msg* ret = ma.getLatestMsg("*");
+	for(int i=0; ret[i].userfrom; i++)
+	{
+		cout <<ret[i].userfrom<<" "<<ret[i].timestamp<<":\n<--- "<<ret[i].text<<endl;
+	}
 }
 
 
