@@ -1,8 +1,16 @@
+CC = g++ 
+CFLAGS = -std=c++11 -g
+LIB_MYSQL = `mysql_config --cflags --include --libs` -L/usr/lib -L/usr/lib/mysql
+LIB_PTHREAD = -lpthread
+CPP_SRC = $(*.cpp)
+CPP_OBJ = $(%cpp, %o, $(CPP_SRC))
+
+
 cmysql:
-	g++ test_c_mysql.cpp `mysql_config --cflags --include --libs` -L/usr/lib -L/usr/lib/mysql -g -o test_c_mysql.bin -std=c++11
+	$(CC) test_c_mysql.cpp $(LIB_MYSQL) $(CFLAGS) -o test_c_mysql.bin
 
 client:
-	g++ client_chat_broadcast.cpp -lpthread -g -o client_chat_broadcast.bin
+	$(CC) client_chat_broadcast.cpp $(LIB_PTHREAD) $(CFLAGS) -o client_chat_broadcast.bin
 
 server:
-	g++ server_chat_broadcast.cpp `mysql_config --cflags --include --libs` -L/usr/lib -L/usr/lib/mysql -lpthread -g -o server_chat_broadcast.bin
+	$(CC) server_chat_broadcast.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_chat_broadcast.bin
