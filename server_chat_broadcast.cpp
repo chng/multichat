@@ -23,7 +23,7 @@ thread 1:
 	
 
 */
-#include <mysql>
+#include <mysql.h>
 
 #include <unistd.h>
 #include <iostream>
