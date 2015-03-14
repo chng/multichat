@@ -12,7 +12,7 @@ struct user
 {
 	char *userid;
 	char *username;
-	char *key;
+	char *password;
 };
 
 struct msg
@@ -33,6 +33,7 @@ class CMYSQL
 	char *key;
 	char *dbname;
 	unsigned int port;
+	bool isconn;
 	static CMYSQL* pmysql;
 
 	CMYSQL( const char *__dbhost, 
@@ -50,7 +51,7 @@ class CMYSQL
 		strcpy(key, __key);
 		dbname = new char[strlen(__dbname)];
 		strcpy(dbname, __dbname);
-		
+		isconn = false;
 		port = __port;
 		conn = mysql_init(0);
 	}
@@ -97,22 +98,26 @@ public:
 
 	MYSQL * connect()
 	{
-		if(!conn)
+		if(!isconn)
 		{
 			conn = mysql_real_connect(conn, dbhost, username, key, dbname, port, NULL, 0);
+			if(conn) isconn = true;
 		}
 		return conn;
 	}
 	
 	void close()
 	{
-		if(conn)
+		if(isconn)
+		{
 			mysql_close(conn);
+			isconn = false;
+		}
 	}
 	
 	MYSQL_RES * query(const char *str_query)
 	{
-		if(!conn)
+		if(!isconn)
 			return NULL;
 		if( mysql_query(conn, str_query) )
 			return NULL;
@@ -141,7 +146,7 @@ public:
 	bool login(const char *userid, const char *key)
 	{
 		char str_query[100];
-		sprintf(str_query, "select COUNT(*) from user where userid='%s' and key='%s'", userid, key);
+		sprintf(str_query, "select COUNT(*) from user where userid='%s' and password='%s';", userid, key);
 		MYSQL_RES *res = pmysql->query(str_query);
 		
 		if(res)
@@ -191,7 +196,7 @@ public:
 
 main()
 {
-	UserAction ua("172.12.72.74", "root", "", "chat_broadcast", 0);
+	UserAction ua("172.12.72.88", "root", "123", "chat_broadcast", 3306);
 	//MsgAction ma;
 	cout <<ua.login("1024", "123")<<endl;
 	cout <<ua.login("2048", "123")<<endl;
