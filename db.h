@@ -208,6 +208,8 @@ public:
 		{
 			while( row = mysql_fetch_row(res) )
 			{
+				sprintf(str_query, "update msg set status=0 where timestamp='%s' and userfrom='%s';", row[0], row[1]);
+				pmysql->query(str_query);
 				ret[i++] = {1, atoi(row[0]), row[1], row[2], row[3]};
 			}
 		}

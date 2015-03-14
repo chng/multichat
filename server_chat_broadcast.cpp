@@ -115,7 +115,7 @@ void* run_poll_handler(void *param)
 	int n;
 	socklen_t lenaddr = sizeof(sockaddr_in);
 	struct sockaddr_in client_addr_poll;
-	char buf[1024];
+	char buf[500];
 	while(1)
 	{
 		lenaddr = sizeof(sockaddr_in);
@@ -127,23 +127,30 @@ void* run_poll_handler(void *param)
 		}
 		char msgtype[10], userid[256], password[256];
 		int client_port_listen;
-		sscanf(buf, "%s:%s:%s:%d", msgtype, userid, password, &client_port_listen);
-		cout <<buf<<endl;
+		sscanf(buf, "%[^:]:%[^:]:%[^:]:%d", msgtype, userid, password, &client_port_listen);
+		cout <<msgtype<<" "<<userid<<endl;
 		if(strcmp(msgtype, "poll")==0)
 		{
 			if( !ua.login(userid, password) ) 
 			{
-				cerr <<"received invalid polling"<<endl;
+				cerr <<"received invalid polling: "<<endl;
 				continue;
 			}
 			msg *latest_msg =  ma.getLatestMsg("*");
+			
+			if(!latest_msg)
+			{
+				cerr <<"failed to load new msg."<<endl; 
+				continue;
+			}
+			cout <<latest_msg[0].timestamp<<" "<<latest_msg[0].userfrom<<endl;
 			if(latest_msg[0].timestamp)
 			{
 				client_addr_recv.sin_family = AF_INET;
 				client_addr_recv.sin_addr = client_addr_poll.sin_addr;
 				client_addr_recv.sin_port = client_port_listen;
 				fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
-				if( 0 == connect(fd_tcp_send, (const sockaddr*)&client_addr_recv, sizeof(sockaddr_in)) )
+				if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_recv, sizeof(sockaddr_in)) )
 				{
 					char buf[4096];
 					for(int i=0; latest_msg[i].timestamp; i++)
