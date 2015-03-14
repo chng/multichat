@@ -99,7 +99,7 @@ public:
 
 	MYSQL * connect()
 	{
-		if(!isconn)\
+		if(!isconn)
 		{
 			conn = mysql_real_connect(conn, dbhost, username, key, dbname, port, NULL, 0);
 			isconn = 1;
