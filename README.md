@@ -99,3 +99,4 @@ FUTURE IMPROVE:
 0  eliminate pthread both in client and server. 
 1  proxy between several servers and the clients.
 2  proxy between the servers and the mysql server cluster.
+3  msg encryption

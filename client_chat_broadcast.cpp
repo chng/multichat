@@ -41,6 +41,20 @@ thread 3:
 	shutdown(fd, SHUT_RD);
 `	
 */
+
+/*
+poll:
+	poll:userid:password:listen_port(network order)
+
+newmsg:
+	newmsg:timestamp:userfrom:text
+
+sendmsg:
+	wrmsg:userid:password:text
+
+*/
+
+
 #include <iostream>
 #include <stdio.h>
 #include <unistd.h>
@@ -57,37 +71,37 @@ using namespace std;
 
 #define BUF_SIZE  2048
 
-int fd_udp_poll = -1;;
-int fd_tcp_listen = -1;
-int fd_tcp_send = -1; 
+static int fd_udp_poll = -1;;
+static int fd_tcp_listen = -1;
+static int fd_tcp_send = -1; 
 
-unsigned short client_port_listen = 2001;
+unsigned short client_port_listen = 10001;
 
 const char *serv_ip   = "127.0.0.1";
 unsigned short serv_port_poll = 9001;
-unsigned short serv_port_recv = 9002;
+unsigned short serv_port_listen = 9002;
 
-struct sockaddr_in serv_addr_poll;
-struct sockaddr_in serv_addr_recv;
-struct sockaddr_in client_addr_listen;
+struct sockaddr_in serv_addr_poll;     // UDP listen port
+struct sockaddr_in serv_addr_recv;     // TCP listen port
+struct sockaddr_in client_addr_listen; // TCP listen port
 
 int sleep_poll = 2;
 
-const char *userid = "chng";
-
+const char *userid = "1024";
+const char * password = "123";
 /* function declare */
-void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_recv, int __client_port_listen);
+void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen);
 void * run_thread_0(void *);
 void * run_thread_1(void *);
 void * run_thread_2(void *);
 
-void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_recv, int __client_port_listen)
+void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen)
 {
 	userid = __userid;
 	serv_ip = __serv_ip;
 
 	serv_port_poll     =  htons( __serv_port_poll );
-	serv_port_recv     =  htons( __serv_port_recv );
+	serv_port_listen     =  htons( __serv_port_listen );
 	client_port_listen =  htons( __client_port_listen );
 
 	
@@ -99,7 +113,7 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 	bzero(&serv_addr_recv, sizeof(serv_addr_recv));
 	serv_addr_recv.sin_family = AF_INET;
 	inet_pton(AF_INET, serv_ip, &serv_addr_recv.sin_addr);
-	serv_addr_recv.sin_port = serv_port_recv;
+	serv_addr_recv.sin_port = serv_port_listen;
 
 	bzero(&client_addr_listen, sizeof(client_addr_listen));
 	client_addr_listen.sin_family = AF_INET;
@@ -110,7 +124,7 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 
 int main(int argc, char ** argv)
 {
-	initialize(userid, serv_ip, serv_port_poll, serv_port_recv, client_port_listen);
+	initialize(userid, serv_ip, serv_port_poll, serv_port_listen, client_port_listen);
 	
 	// run threads
 	pthread_t tid_0, tid_1, tid_2;	// thread id
@@ -134,7 +148,7 @@ void * run_thread_0(void *param)
 {
 	cout <<"thread poll running"<<"\n";
 	char buf[1024];
-	sprintf(buf, "poll:%s:%d", userid, client_port_listen); 
+	sprintf(buf, "poll:%s:%s:%d", userid, password, client_port_listen); 
 	//cout <<buf<<endl;
 	while(0 > fd_udp_poll)
 	{
@@ -173,7 +187,7 @@ void * run_thread_1(void *param)
 		{
 			while( (n = read(connfd, buf, sizeof(buf))) > 0 )
 				cout <<"<--- "<<buf<<endl;
-		} while(n<0 && errno == EINTR);
+		} while(n>0 ||  errno == EINTR);
 		close(connfd);
 	}
 	
@@ -185,8 +199,12 @@ void * run_thread_2(void *param)
 	char buf[4096];
 	while(1)
 	{
-		buf[0]='m'; buf[1]='s'; buf[2]='g'; buf[3]=':';
-		cin >> (buf+4);
+		strcpy(buf, "wrmsg:");
+		strcat(buf, userid);
+		strcat(buf, ":");
+		strcat(buf, password);
+		strcat(buf, ":");
+		cin >> (buf+strlen(buf));
 		cout <<buf<<endl;
 		fd_tcp_send = socket(PF_INET, SOCK_STREAM, 0);
 		if(0 == connect(fd_tcp_send, (const sockaddr*)&serv_addr_recv, sizeof(serv_addr_recv)))

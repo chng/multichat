@@ -1,29 +1,3 @@
-/*
-chat broadcast: server
-
-main: 
-	create epoll
-	initialize udp reader based on epoll:
-	initialize tcp listener based on epoll
-
-thread 1:
-	
-	while(1) 
-	{
-		readfrom udp
-		pthread_create()
-		{
-			select from db
-			if(has new msg)
-			{
-				epoll_ctl(ADD); // register a write 
-			}
-		}
-	}
-	
-
-*/
-
 #include <unistd.h>
 #include <iostream>
 #include <stdio.h>
@@ -69,8 +43,4 @@ int main(int argc, char ** argv)
 	}
 	echo(fd, (sockaddr*)&cli_addr, sizeof(cli_addr));
 }
-
-
-
-
 

@@ -2,7 +2,7 @@
 chat broadcast: server
 
 main: 
-	create epoll
+	epoll_create
 	initialize udp reader based on epoll:
 	initialize tcp listener based on epoll
 
@@ -20,7 +20,17 @@ thread 1:
 			}
 		}
 	}
-	
+*/
+
+/*
+poll:
+        poll:userid:password:listen_port(network order)
+
+newmsg:
+        newmsg:timestamp:userfrom:text
+
+sendmsg:
+        wrmsg:userid:password:text
 
 */
 
@@ -40,57 +50,143 @@ thread 1:
 
 using namespace std;
 
+static UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+static MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 
-void echo_poll(int fd, sockaddr* pcliaddr, socklen_t len_client)
+struct sockaddr_in serv_addr_poll;
+struct sockaddr_in serv_addr_listen;
+struct sockaddr_in client_addr_send; // recv new msg from this addr 
+struct sockaddr_in client_addr_recv; // send to this addr when there is new msg. address is within client_addr_poll, and port i  within the poll packet.
+
+static int fd_udp_poll = -1;  // UDP port, listen for polling
+static int fd_tcp_send = -1;  // TCP port, sending msg
+static int fd_tcp_listen = -1;// TCP port, listen for incoming msg
+
+
+static int serv_port_poll = 9001;
+static int serv_port_listen = 9002;
+
+
+void initialize(const int __serv_port_poll, const int __serv_port_listen);
+void* run_poll_handler(void *param);
+int writen(int fd, char * buf, size_t len);
+int readn(int fd, char * buf, size_t len);
+
+
+int main(int argc, char ** argv)
+{
+	initialize(serv_port_poll, serv_port_listen);
+	pthread_t tid0;
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_create(&tid0, &attr, run_poll_handler, NULL);
+	pthread_join(tid0, NULL);
+}
+
+
+void initialize(const int __serv_port_poll, const int __serv_port_listen)
+{
+	//UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+	//MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+
+	serv_port_poll   = htons(__serv_port_poll);
+	serv_port_listen = htons(__serv_port_listen);
+	
+	bzero(&serv_addr_poll, sizeof(sockaddr_in));
+	serv_addr_poll.sin_family = AF_INET;
+	serv_addr_poll.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr_poll.sin_port = serv_port_poll;
+	fd_udp_poll = socket(AF_INET, SOCK_DGRAM, 0);
+
+	bzero(&serv_addr_listen, sizeof(sockaddr_in));
+	serv_addr_listen.sin_family = AF_INET;
+	serv_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr_poll.sin_port = serv_port_listen;
+	fd_tcp_listen = socket(AF_INET, SOCK_DGRAM, 0);
+}
+
+
+void* run_poll_handler(void *param)
 {
 	int n;
-	socklen_t lenaddr;
+	socklen_t lenaddr = sizeof(sockaddr_in);
+	struct sockaddr_in client_addr_poll;
 	char buf[1024];
 	while(1)
 	{
-		lenaddr = len_client;
-		n = recvfrom(fd, buf, sizeof(buf), 0, pcliaddr, &lenaddr);
+		cout <<"debug"<<endl;
+		n = recvfrom(fd_udp_poll, buf, sizeof(buf), 0, (sockaddr*)&client_addr_poll, &lenaddr);
 		if(n<=0)
+		{
+			cerr <<"read error"<<endl;
 			continue;
-		char msgtype[10], userid[256];
-		int port;
-		sscanf(buf, "%s:%s:%d", msgtype, userid, &port);
+		}
+		char msgtype[10], userid[256], password[256];
+		int client_port_listen;
+		sscanf(buf, "%s:%s:%s:%d", msgtype, userid, password, &client_port_listen);
+		cout <<buf<<endl;
 		if(strcmp(msgtype, "poll")==0)
 		{
-			/*
-			//select * from msg where to=useris and stat='unread';
-			if(has new msg)
+			if( !ua.login(userid, password) ) 
+				continue;
+			msg *latest_msg =  ma.getLatestMsg("*");
+			if(latest_msg[0].timestamp)
 			{
-				pcliaddr->sin_port = port;
-				send by TCP: ip, port
+				client_addr_recv.sin_family = AF_INET;
+				client_addr_recv.sin_addr = client_addr_poll.sin_addr;
+				client_addr_recv.sin_port = client_port_listen;
+				fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
+				if( 0 == connect(fd_tcp_send, (const sockaddr*)&client_addr_recv, sizeof(sockaddr_in)) )
+				{
+					char buf[4096];
+					for(int i=0; latest_msg[i].timestamp; i++)
+					{
+						sprintf(buf, "newmsg:%d:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom, latest_msg[i].text);
+						writen(fd_tcp_send, buf, strlen(buf));
+					}
+				}
+				close(fd_tcp_send);
 			}
-			*/
 		}
 		
 	}
 }
 
-int main(int argc, char ** argv)
+
+int writen(int fd, char * buf, size_t len)
 {
-	int fd;
-	struct sockaddr_in serv_addr, cli_addr;
-	bzero(&serv_addr, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(atoi(argv[1]));
-	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if( bind(fd, (sockaddr*)&serv_addr, sizeof(serv_addr)) )
+	char * cur = buf;
+	int n = -1;
+	while(len>0)
 	{
-		cerr <<"bind error. fd = "<<fd<<"\n";
-		exit(1);
+		n = write(fd, cur, len);
+		if (n<=0)
+		{
+			if(errno == EINTR) continue;
+			else return -1;
+		}
+		len -= n;
+		cur += n;
 	}
-	echo_poll(fd, (sockaddr*)&cli_addr, sizeof(cli_addr));
+	return 0;
 }
 
-
-void initialize()
+int readn(int fd, char* buf, size_t len)
 {
-	UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
-	MsgAction ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+	char *cur = buf;
+	int n = -1;
+	while (len>0)
+	{
+		n = read(fd, cur, len);
+		if (n == -1)
+		{
+			if (errno == EINTR)
+				continue;
+			else break;
+		}
+		else if (n == 0)
+			break;
+		cur += n; len -= n;
+	}
+	return (int)(cur-buf);
 }
-
