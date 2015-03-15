@@ -297,14 +297,19 @@ public:
 		char str_query[100];
 		sprintf(str_query, "select COUNT(*) from user where userid='%s' and password='%s';", userid, key);
 		MYSQL_RES *res = pmysql->query(str_query);
-		
-		if(res)
-		{
-			MYSQL_ROW row = mysql_fetch_row(res);
-			if(atoi(row[0])) return true;
-		}
+		if(!res) return false;
+		MYSQL_ROW row = mysql_fetch_row(res);
 		mysql_free_result(res);
-		return false;
+		if(atoi(row[0])) return true;
+	}
+	
+	unsigned int getUserCount()
+	{
+		MYSQL_RES *res = pmysql->query("select COUNT(*) from user;");
+		if(!res) return 0;
+		MYSQL_ROW row = mysql_fetch_row(res);
+		mysql_free_result(res);
+		return atoi(row[0]);
 	}
 };
 #endif

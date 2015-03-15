@@ -50,6 +50,22 @@ wrmsg:
 
 using namespace std;
 
+#define MSGTYPE_POLL "poll"
+#define MSGTYPE_WRMSG "wrmsg"
+#define MSGTYPE_NEWMSG "newmsg"
+
+#define LEN_MSG_POLL 55
+#define LEN_MSG_NEWMSG 4096
+#define LEN_MSG_WRMSG 4096
+
+#define LEN_MSG_TYPE 10
+#define LEN_USERID 20
+#define LEN_USERNAME 20
+#define LEN_PASSWORD 20
+#define LEN_TEXT 4000
+#define LEN_MSG 4096
+
+
 #define TRACE(X) (X)
 //#define TRACE(X) (X, cout <<#X<<endl);
 
@@ -118,6 +134,7 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
 		exit(0);
 	}
+	
 }
 
 
@@ -127,7 +144,7 @@ void* run_poll_handler(void *param)
 	int n;
 	socklen_t lenaddr = sizeof(sockaddr_in);
 	struct sockaddr_in client_addr_poll;
-	char buf[500];
+	char buf[LEN_MSG_POLL];
 	while(1)
 	{
 		lenaddr = sizeof(sockaddr_in);
@@ -137,10 +154,10 @@ void* run_poll_handler(void *param)
 			cerr <<"read error"<<endl;
 			continue;
 		}
-		char msgtype[10], userid[256], password[256];
+		char msgtype[LEN_MSGTYPE], userid[LEN_USERID], password[LEN_PASSWORD];
 		int client_port_listen;
 		sscanf(buf, "%[^:]:%[^:]:%[^:]:%d", msgtype, userid, password, &client_port_listen);
-		if(strcmp(msgtype, "poll")==0)
+		if(strcmp(msgtype, MSGTYPE_POLL)==0)
 		{
 			if( !ua.login(userid, password) ) 
 			{
@@ -160,10 +177,10 @@ void* run_poll_handler(void *param)
 			fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
 			if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)) )
 			{
-				char buf[4096];
+				char buf[LEN_MSG_NEWMSG];
 				for(int i=0; latest_msg[i].timestamp; i++)
 				{
-					sprintf(buf, "newmsg:%d:%s:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom_name, latest_msg[i].userfrom, latest_msg[i].text);
+					sprintf(buf, MSGTYPE_NEWMSG ":%d:%s:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom_name, latest_msg[i].userfrom, latest_msg[i].text);
 					writen(fd_tcp_send, buf, strlen(buf));
 				}
 			}
@@ -186,7 +203,7 @@ void *run_recv_wrmsg(void * param)
 	 
 	int n;
 	socklen_t lenaddr = sizeof(sockaddr_in);
-	char buf[4096];
+	char buf[LEN_MSG_WRMSG];
 	while(1)
 	{
 		lenaddr = sizeof(sockaddr_in);
@@ -198,10 +215,10 @@ void *run_recv_wrmsg(void * param)
 		}
 		if(readn(connfd, buf, sizeof(buf)) > 0 )
 		{
-			char msgtype[10], userid[256], password[256], userto[256], text[4096];
+			char msgtype[LEN_MSGTYPE], userid[LEN_USERID], password[LEN_PASSWORD], userto[LEN_USERID], text[LEN_TEXT];
 			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, userto, text);
 			cout <<buf<<endl;
-			if(strcmp("wrmsg", msgtype)==0 && ua.login(userid, password))
+			if(strcmp(MSGTYPE_WRMSG, msgtype)==0 && ua.login(userid, password))
 				ma.insertNewMsg(userid, userto, text);
 		}
 		close(connfd);

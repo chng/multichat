@@ -69,7 +69,21 @@ sendmsg:
 
 using namespace std;
 
-#define BUF_SIZE  2048
+#define MSGTYPE_POLL "poll"
+#define MSGTYPE_WRMSG "wrmsg"
+#define MSGTYPE_NEWMSG "newmsg"
+
+#define LEN_MSG_POLL 55
+#define LEN_MSG_NEWMSG 4096
+#define LEN_MSG_WRMSG 4096
+
+#define LEN_MSG_TYPE 10
+#define LEN_USERID 20
+#define LEN_USERNAME 20
+#define LEN_PASSWORD 20
+#define LEN_TEXT 4000
+#define LEN_MSG 4096
+
 
 static int fd_udp_poll = -1;;
 static int fd_tcp_listen = -1;
@@ -160,8 +174,8 @@ int main(int argc, char ** argv)
 void * run_thread_0(void *param)
 {
 	cout <<"thread poll running"<<"\n";
-	char buf[1024];
-	sprintf(buf, "poll:%s:%s:%d", userid, password, client_port_listen); 
+	char buf[LEN_MSG_POLL];
+	sprintf(buf, MSGTYPE_POLL ":%s:%s:%d", userid, password, client_port_listen); 
 	//cout <<buf<<endl;
 	while(0 > fd_udp_poll)
 	{
@@ -186,7 +200,7 @@ void * run_thread_1(void *param)
 	struct sockaddr_in serv_addr_send;
 	int n;
 	socklen_t lenaddr = sizeof(serv_addr_send);
-	char buf[4096];
+	char buf[LEN_MSG_NEWMSG];
 	while(1)
 	{
 		int connfd = accept(fd_tcp_listen, (sockaddr*)&serv_addr_send, &lenaddr);
@@ -196,7 +210,7 @@ void * run_thread_1(void *param)
 			char msgtype[10], userfrom_name[256], userfrom[256], text[4096];
 			long timestamp = 0;
 			sscanf(buf, "%[^:]:%ld:%[^:]:%[^:]:%[^:]", msgtype, &timestamp, userfrom_name, userfrom, text);
-			if(strcmp("newmsg", msgtype)==0)
+			if(strcmp(MSGTYPE_NEWMSG, msgtype)==0)
 			{
 				if(strcmp(userid, userfrom) == 0)	
 				{	
@@ -216,10 +230,10 @@ void * run_thread_1(void *param)
 void * run_thread_2(void *param)
 {
 	cout <<"thread send running"<<"\n";
-	char buf[4096];
+	char buf[LEN_MSG_WRMSG];
 	while(1)
 	{
-		strcpy(buf, "wrmsg:");
+		strcpy(buf, MSGTYPE_WRMSG ":");
 		strcat(buf, userid);
 		strcat(buf, ":");
 		strcat(buf, password);
