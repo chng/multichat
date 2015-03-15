@@ -25,7 +25,7 @@ poll:
         poll:userid:password:listen_port(network order)
 
 newmsg:
-        newmsg:timestamp:userfrom:text
+        newmsg:timestamp:userfrom_name:userfrom:text
 
 sendmsg:
         wrmsg:userid:password:userto:text
