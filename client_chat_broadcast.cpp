@@ -225,7 +225,7 @@ void * run_thread_2(void *param)
 		strcat(buf, password);
 		strcat(buf, ":%:"); // to any
 		int lenhead = strlen(buf);
-		gets(buf+lenhead);
+		cin.getline(buf+lenhead, sizeof(buf)-lenhead);
 		if( !buf[lenhead] )
 			continue;
 		fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
