@@ -28,7 +28,7 @@ newmsg:
         newmsg:timestamp:userfrom:text
 
 sendmsg:
-        wrmsg:userid:password:text
+        wrmsg:userid:password:userto:text
 
 
 ====================================================================
