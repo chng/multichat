@@ -58,7 +58,7 @@ using namespace std;
 #define LEN_MSG_NEWMSG 4096
 #define LEN_MSG_WRMSG 4096
 
-#define LEN_MSG_TYPE 10
+#define LEN_MSGTYPE 10
 #define LEN_USERID 20
 #define LEN_USERNAME 20
 #define LEN_PASSWORD 20
