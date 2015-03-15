@@ -29,8 +29,8 @@ poll:
 newmsg:
         newmsg:timestamp:userfrom:text
 
-sendmsg:
-        wrmsg:userid:password:text
+wrmsg:
+        wrmsg:userid:password:userto:text
 
 */
 
@@ -49,6 +49,9 @@ sendmsg:
 #include "db.h"
 
 using namespace std;
+
+#define TRACE(X) (X)
+//#define TRACE(X) (X, cout <<#X<<endl);
 
 static UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
 static MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
@@ -108,7 +111,7 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 	bzero(&serv_addr_listen, sizeof(sockaddr_in));
 	serv_addr_listen.sin_family = AF_INET;
 	serv_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr_poll.sin_port = serv_port_listen;
+	serv_addr_listen.sin_port = serv_port_listen;
 	fd_tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
 	if( bind(fd_tcp_listen, (sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)) )
 	{
@@ -137,7 +140,6 @@ void* run_poll_handler(void *param)
 		char msgtype[10], userid[256], password[256];
 		int client_port_listen;
 		sscanf(buf, "%[^:]:%[^:]:%[^:]:%d", msgtype, userid, password, &client_port_listen);
-		cout <<msgtype<<" "<<userid<<endl;
 		if(strcmp(msgtype, "poll")==0)
 		{
 			if( !ua.login(userid, password) ) 
@@ -164,7 +166,6 @@ void* run_poll_handler(void *param)
 					for(int i=0; latest_msg[i].timestamp; i++)
 					{
 						sprintf(buf, "newmsg:%d:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom, latest_msg[i].text);
-						cout <<buf<<endl;
 						writen(fd_tcp_send, buf, strlen(buf));
 					}
 				}
@@ -190,14 +191,17 @@ void *run_recv_wrmsg(void * param)
 	while(1)
 	{
 		lenaddr = sizeof(sockaddr_in);
-		int connfd = accept(fd_tcp_listen, (sockaddr*)&client_addr_send, &lenaddr);
-		if(readn(connfd, buf, sizeof(buf)) == 0)
+		int connfd = TRACE(accept(fd_tcp_listen, (sockaddr*)&client_addr_send, &lenaddr));
+		if(connfd<0)
 		{
-			cout <<buf<<endl;
-			char msgtype[10], userid[256], password[256], text[4096];
-			const char *userto = "*";
-			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, text);
-			if(ua.login(userid, password))
+			cerr <<"conndfd error"<<endl;
+			continue;
+		}
+		if(readn(connfd, buf, sizeof(buf)) > 0 )
+		{
+			char msgtype[10], userid[256], password[256], userto[256], text[4096];
+			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, userto, text);
+			if(strcmp("wrmsg", msgtype)==0 && ua.login(userid, password))
 				ma.insertNewMsg(userid, userto, text);
 		}
 		close(connfd);

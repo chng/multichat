@@ -50,7 +50,7 @@ newmsg:
 	newmsg:timestamp:userfrom:text
 
 sendmsg:
-	wrmsg:userid:password:text
+	wrmsg:userid:password:userto:text
 
 */
 
@@ -85,15 +85,22 @@ struct sockaddr_in serv_addr_poll;     // UDP listen port
 struct sockaddr_in serv_addr_listen;     // TCP listen port
 struct sockaddr_in client_addr_listen; // TCP listen port
 
-int sleep_poll = 2;
+int sleep_poll = 1;
 
 const char *userid = "1024";
 const char * password = "123";
+
 /* function declare */
 void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen);
 void * run_thread_0(void *);
 void * run_thread_1(void *);
 void * run_thread_2(void *);
+
+int readn(int fd, char* buf, size_t len);
+int writen(int fd, char * buf, size_t len);
+/* end of function declare */
+
+
 
 void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen)
 {
@@ -184,11 +191,23 @@ void * run_thread_1(void *param)
 	{
 		int connfd = accept(fd_tcp_listen, (sockaddr*)&serv_addr_send, &lenaddr);
 		//close(fd_tcp_listen);
-		do
+		if (0 < readn(connfd, buf, sizeof(buf)) )
 		{
-			while( (n = read(connfd, buf, sizeof(buf))) > 0 )
-				cout <<"<--- "<<buf<<endl;
-		} while(n>0 ||  errno == EINTR);
+			char msgtype[10], userfrom[256], text[4096];
+			long timestamp = 0;
+			sscanf(buf, "%[^:]:%d:%[^:]:%[^:]", msgtype, &timestamp, userfrom, text);
+			if(strcmp("newmsg", msgtype)==0)
+			{
+				if(strcmp(userid, userfrom) == 0)	
+				{	
+					cout <<"\nI: "<<ctime(&timestamp)<<"---> "<<text<<endl;
+				}
+				else
+				{
+					cout <<"\n"<<userfrom<<": "<<ctime(&timestamp)<<"<--- "<<text<<endl;
+				}
+			}
+		}
 		close(connfd);
 	}
 	
@@ -204,13 +223,13 @@ void * run_thread_2(void *param)
 		strcat(buf, userid);
 		strcat(buf, ":");
 		strcat(buf, password);
-		strcat(buf, ":");
+		strcat(buf, ":*:"); // to any
 		cin.getline(buf+strlen(buf), sizeof(buf)-strlen(buf));
 		fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
 		if( !connect(fd_tcp_send, (const sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)))
 		{
 			if(0 < send(fd_tcp_send, buf, strlen(buf), 0))
-				cout <<"---> "<<buf<<endl;
+				;//cout <<"---> "<<buf<<endl;
 			else
 				cerr <<"-x-> "<<buf<<endl;
 			//recv(sfd, buf, BUF_SIZE-1, 0);
@@ -224,3 +243,41 @@ void * run_thread_2(void *param)
 	}
 }
 
+
+int writen(int fd, char * buf, size_t len)
+{
+        char * cur = buf;
+        int n = -1; 
+        while(len>0)
+        {   
+                n = write(fd, cur, len);
+                if (n<=0)
+                {   
+                        if(errno == EINTR) continue;
+                        else return -1; 
+                }   
+                len -= n;
+                cur += n;
+        }   
+        return 0;
+}
+
+int readn(int fd, char* buf, size_t len)
+{
+        char *cur = buf;
+        int n = -1; 
+        while (len>0)
+        {   
+                n = read(fd, cur, len);
+                if (n == -1) 
+                {   
+                        if (errno == EINTR)
+                                continue;
+                        else break;
+                }   
+                else if (n == 0)
+                        break;
+                cur += n; len -= n;
+        }   
+        return (int)(cur-buf);
+}

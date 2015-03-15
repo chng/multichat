@@ -201,11 +201,11 @@ public:
 		char str_query[100];
 		sprintf(str_query, "select timestamp, userfrom, userto, text from msg where userto='%s' and status='1' limit 0, 1000;", userid);
 		MYSQL_RES *res = pmysql->query(str_query);
-		MYSQL_ROW row;
 		msg *ret = new msg [mysql_field_count(pmysql->connect())+1];
 		int i=0;
-		if(res)
+		if(ret && res)
 		{
+			MYSQL_ROW row;
 			while( row = mysql_fetch_row(res) )
 			{
 				sprintf(str_query, "update msg set status=0 where timestamp='%s' and userfrom='%s';", row[0], row[1]);
