@@ -4,115 +4,199 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-BUF_SIZE	client_chat_broadcast.cpp	58;"	d	file:
+BLL_MSGACTION	db.cpp	218;"	d	file:
+BLL_MSGACTION	db.h	218;"	d
+BLL_USERACTION	db.cpp	185;"	d	file:
+BLL_USERACTION	db.h	185;"	d
+BUF_SIZE	client_chat_broadcast.cpp	72;"	d	file:
 CC	Makefile	/^CC = g++ $/;"	m
 CFLAGS	Makefile	/^CFLAGS = -std=c++11 -g$/;"	m
 CMYSQL	db.cpp	/^	CMYSQL( const char *__dbhost, $/;"	f	class:CMYSQL	file:
 CMYSQL	db.cpp	/^class CMYSQL$/;"	c	file:
+CMYSQL	db.h	/^	CMYSQL( const char *__dbhost, $/;"	f	class:CMYSQL
+CMYSQL	db.h	/^class CMYSQL$/;"	c
 CMYSQL	test_c_mysql.cpp	/^	CMYSQL( const char *__dbhost, $/;"	f	class:CMYSQL	file:
 CMYSQL	test_c_mysql.cpp	/^class CMYSQL$/;"	c	file:
 CPP_OBJ	Makefile	/^CPP_OBJ = $(%cpp, %o, $(CPP_SRC))$/;"	m
 CPP_SRC	Makefile	/^CPP_SRC = $(*.cpp)$/;"	m
+DAL_CMYSQL	db.cpp	58;"	d	file:
+DAL_CMYSQL	db.h	58;"	d
 GC	db.cpp	/^	class GC$/;"	c	class:CMYSQL	file:
+GC	db.h	/^	class GC$/;"	c	class:CMYSQL
 GC	test_c_mysql.cpp	/^	class GC$/;"	c	class:CMYSQL	file:
 LIB_MYSQL	Makefile	/^LIB_MYSQL = `mysql_config --cflags --include --libs` -L\/usr\/lib -L\/usr\/lib\/mysql$/;"	m
 LIB_PTHREAD	Makefile	/^LIB_PTHREAD = -lpthread$/;"	m
+MODEL_MSG	db.cpp	39;"	d	file:
+MODEL_MSG	db.h	39;"	d
+MODEL_MSG_NAME	db.cpp	173;"	d	file:
+MODEL_MSG_NAME	db.h	173;"	d
+MODEL_USER	db.cpp	25;"	d	file:
+MODEL_USER	db.h	25;"	d
 MsgAction	db.cpp	/^	MsgAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:MsgAction
 MsgAction	db.cpp	/^class MsgAction$/;"	c	file:
+MsgAction	db.h	/^	MsgAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:MsgAction
+MsgAction	db.h	/^class MsgAction$/;"	c
 MsgAction	test_c_mysql.cpp	/^	MsgAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:MsgAction
 MsgAction	test_c_mysql.cpp	/^class MsgAction$/;"	c	file:
+TRACE	server_chat_broadcast.cpp	53;"	d	file:
 UserAction	db.cpp	/^	UserAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:UserAction
 UserAction	db.cpp	/^class UserAction$/;"	c	file:
+UserAction	db.h	/^	UserAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:UserAction
+UserAction	db.h	/^class UserAction$/;"	c
 UserAction	test_c_mysql.cpp	/^	UserAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)$/;"	f	class:UserAction
 UserAction	test_c_mysql.cpp	/^class UserAction$/;"	c	file:
-client_addr_listen	client_chat_broadcast.cpp	/^struct sockaddr_in client_addr_listen;$/;"	v	typeref:struct:sockaddr_in
-client_port_listen	client_chat_broadcast.cpp	/^unsigned short client_port_listen = 2001;$/;"	v
+__IOSTREAM_H	db.cpp	17;"	d	file:
+__IOSTREAM_H	db.h	17;"	d
+client_addr_listen	client_chat_broadcast.cpp	/^struct sockaddr_in client_addr_listen; \/\/ TCP listen port$/;"	v	typeref:struct:sockaddr_in
+client_addr_listen	server_chat_broadcast.cpp	/^struct sockaddr_in client_addr_listen; \/\/ send to this addr when there is new msg. address is within client_addr_poll, and port i  within the poll packet.$/;"	v	typeref:struct:sockaddr_in
+client_addr_send	server_chat_broadcast.cpp	/^struct sockaddr_in client_addr_send; \/\/ recv new msg from this addr $/;"	v	typeref:struct:sockaddr_in
+client_port_listen	client_chat_broadcast.cpp	/^unsigned short client_port_listen = 10001;$/;"	v
 close	db.cpp	/^	void close()$/;"	f	class:CMYSQL
+close	db.h	/^	void close()$/;"	f	class:CMYSQL
 close	test_c_mysql.cpp	/^	void close()$/;"	f	class:CMYSQL
 conn	db.cpp	/^	MYSQL *conn;$/;"	m	class:CMYSQL	file:
+conn	db.h	/^	MYSQL *conn;$/;"	m	class:CMYSQL
 conn	test_c_mysql.cpp	/^	MYSQL *conn;$/;"	m	class:CMYSQL	file:
 connect	db.cpp	/^	MYSQL * connect()$/;"	f	class:CMYSQL
+connect	db.h	/^	MYSQL * connect()$/;"	f	class:CMYSQL
 connect	test_c_mysql.cpp	/^	MYSQL * connect()$/;"	f	class:CMYSQL
 dbhost	db.cpp	/^	char *dbhost;$/;"	m	class:CMYSQL	file:
+dbhost	db.h	/^	char *dbhost;$/;"	m	class:CMYSQL
 dbhost	test_c_mysql.cpp	/^	char *dbhost;$/;"	m	class:CMYSQL	file:
 dbname	db.cpp	/^	char *dbname;$/;"	m	class:CMYSQL	file:
+dbname	db.h	/^	char *dbname;$/;"	m	class:CMYSQL
 dbname	test_c_mysql.cpp	/^	char *dbname;$/;"	m	class:CMYSQL	file:
 echo	test_udp_recv.cpp	/^void echo(int fd, sockaddr* pcliaddr, socklen_t len_client)$/;"	f
-echo_poll	server_chat_broadcast.cpp	/^void echo_poll(int fd, sockaddr* pcliaddr, socklen_t len_client)$/;"	f
-fd_tcp_listen	client_chat_broadcast.cpp	/^int fd_tcp_listen = -1;$/;"	v
-fd_tcp_send	client_chat_broadcast.cpp	/^int fd_tcp_send = -1; $/;"	v
-fd_udp_poll	client_chat_broadcast.cpp	/^int fd_udp_poll = -1;;$/;"	v
+fd_tcp_listen	client_chat_broadcast.cpp	/^static int fd_tcp_listen = -1;$/;"	v	file:
+fd_tcp_listen	server_chat_broadcast.cpp	/^static int fd_tcp_listen = -1;\/\/ TCP port, listen for incoming msg$/;"	v	file:
+fd_tcp_send	client_chat_broadcast.cpp	/^static int fd_tcp_send = -1; $/;"	v	file:
+fd_tcp_send	server_chat_broadcast.cpp	/^static int fd_tcp_send = -1;  \/\/ TCP port, sending msg$/;"	v	file:
+fd_udp_poll	client_chat_broadcast.cpp	/^static int fd_udp_poll = -1;;$/;"	v	file:
+fd_udp_poll	server_chat_broadcast.cpp	/^static int fd_udp_poll = -1;  \/\/ UDP port, listen for polling$/;"	v	file:
 gc	db.cpp	/^	static GC gc;$/;"	m	class:CMYSQL	file:
+gc	db.h	/^	static GC gc;$/;"	m	class:CMYSQL
 gc	test_c_mysql.cpp	/^	static GC gc;$/;"	m	class:CMYSQL	file:
 getInstance	db.cpp	/^	CMYSQL *getInstance()$/;"	f	class:CMYSQL
 getInstance	db.cpp	/^	static CMYSQL *getInstance( 	const char *__dbhost, $/;"	f	class:CMYSQL
+getInstance	db.h	/^	CMYSQL *getInstance()$/;"	f	class:CMYSQL
+getInstance	db.h	/^	static CMYSQL *getInstance( 	const char *__dbhost, $/;"	f	class:CMYSQL
 getInstance	test_c_mysql.cpp	/^	CMYSQL *getInstance()$/;"	f	class:CMYSQL
 getInstance	test_c_mysql.cpp	/^	static CMYSQL *getInstance( 	const char *__dbhost, $/;"	f	class:CMYSQL
-getLatestMsg	db.cpp	/^	msg* getLatestMsg(const char *userid)$/;"	f	class:MsgAction
+getLatestMsg	db.cpp	/^	const msg_name *getLatestMsg(const char *userquery, const char *userto)$/;"	f	class:MsgAction
+getLatestMsg	db.h	/^	const msg_name *getLatestMsg(const char *userquery, const char *userto)$/;"	f	class:MsgAction
 getLatestMsg	test_c_mysql.cpp	/^	msg* getLatestMsg(const char *userid)$/;"	f	class:MsgAction
-initialize	client_chat_broadcast.cpp	/^void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_recv, int __client_port_listen)$/;"	f
-initialize	server_chat_broadcast.cpp	/^void initialize()$/;"	f
+initialize	client_chat_broadcast.cpp	/^void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen)$/;"	f
+initialize	server_chat_broadcast.cpp	/^void initialize(const int __serv_port_poll, const int __serv_port_listen)$/;"	f
 insertNewMsg	db.cpp	/^	bool insertNewMsg(const char *from, const char *to, const char * text)$/;"	f	class:MsgAction
+insertNewMsg	db.h	/^	bool insertNewMsg(const char *from, const char *to, const char * text)$/;"	f	class:MsgAction
 insertNewMsg	test_c_mysql.cpp	/^	bool insertNewMsg(const char *from, const char *to, const char * text)$/;"	f	class:MsgAction
 isconn	db.cpp	/^	bool isconn;$/;"	m	class:CMYSQL	file:
+isconn	db.h	/^	bool isconn;$/;"	m	class:CMYSQL
 isconn	test_c_mysql.cpp	/^	bool isconn;$/;"	m	class:CMYSQL	file:
 key	db.cpp	/^	char *key;$/;"	m	class:CMYSQL	file:
+key	db.h	/^	char *key;$/;"	m	class:CMYSQL
 key	test_c_mysql.cpp	/^	char *key;$/;"	m	class:CMYSQL	file:
 login	db.cpp	/^	bool login(const char *userid, const char *key)$/;"	f	class:UserAction
+login	db.h	/^	bool login(const char *userid, const char *key)$/;"	f	class:UserAction
 login	test_c_mysql.cpp	/^	bool login(const char *userid, const char *key)$/;"	f	class:UserAction
 main	client_chat_broadcast.cpp	/^int main(int argc, char ** argv)$/;"	f
+main	db.cpp	/^main()$/;"	f
 main	server_chat_broadcast.cpp	/^int main(int argc, char ** argv)$/;"	f
 main	test_c_mysql.cpp	/^main()$/;"	f
 main	test_udp_recv.cpp	/^int main(int argc, char ** argv)$/;"	f
+msg	db.cpp	/^	msg(int _status=0, int _ts=0, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL)$/;"	f	struct:msg
 msg	db.cpp	/^struct msg$/;"	s	file:
+msg	db.h	/^	msg(int _status=0, int _ts=0, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL)$/;"	f	struct:msg
+msg	db.h	/^struct msg$/;"	s
 msg	test_c_mysql.cpp	/^struct msg$/;"	s	file:
+msg_name	db.cpp	/^	msg_name(long _ts=0, int _status=0, char *_userfrom_name=NULL, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL )$/;"	f	struct:msg_name
+msg_name	db.cpp	/^struct msg_name: public msg$/;"	s	file:
+msg_name	db.h	/^	msg_name(long _ts=0, int _status=0, char *_userfrom_name=NULL, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL )$/;"	f	struct:msg_name
+msg_name	db.h	/^struct msg_name: public msg$/;"	s
+password	client_chat_broadcast.cpp	/^const char * password = "123";$/;"	v
 password	db.cpp	/^	char *password;$/;"	m	struct:user	file:
+password	db.h	/^	char *password;$/;"	m	struct:user
 password	test_c_mysql.cpp	/^	char *password;$/;"	m	struct:user	file:
 pmysql	db.cpp	/^	CMYSQL * pmysql;$/;"	m	class:MsgAction	file:
 pmysql	db.cpp	/^	CMYSQL * pmysql;$/;"	m	class:UserAction	file:
-pmysql	db.cpp	/^	static CMYSQL* pmysql;$/;"	m	class:CMYSQL	file:
+pmysql	db.cpp	/^	static CMYSQL *pmysql;$/;"	m	class:CMYSQL	file:
 pmysql	db.cpp	/^CMYSQL * CMYSQL::pmysql = NULL;$/;"	m	class:CMYSQL	file:
+pmysql	db.h	/^	CMYSQL * pmysql;$/;"	m	class:MsgAction
+pmysql	db.h	/^	CMYSQL * pmysql;$/;"	m	class:UserAction
+pmysql	db.h	/^	static CMYSQL *pmysql;$/;"	m	class:CMYSQL
+pmysql	db.h	/^CMYSQL * CMYSQL::pmysql = NULL;$/;"	m	class:CMYSQL
 pmysql	test_c_mysql.cpp	/^	CMYSQL * pmysql;$/;"	m	class:MsgAction	file:
 pmysql	test_c_mysql.cpp	/^	CMYSQL * pmysql;$/;"	m	class:UserAction	file:
 pmysql	test_c_mysql.cpp	/^	static CMYSQL* pmysql;$/;"	m	class:CMYSQL	file:
 pmysql	test_c_mysql.cpp	/^CMYSQL * CMYSQL::pmysql = NULL;$/;"	m	class:CMYSQL	file:
 port	db.cpp	/^	unsigned int port;$/;"	m	class:CMYSQL	file:
+port	db.h	/^	unsigned int port;$/;"	m	class:CMYSQL
 port	test_c_mysql.cpp	/^	unsigned int port;$/;"	m	class:CMYSQL	file:
 query	db.cpp	/^	MYSQL_RES * query(const char *str_query)$/;"	f	class:CMYSQL
+query	db.h	/^	MYSQL_RES * query(const char *str_query)$/;"	f	class:CMYSQL
 query	test_c_mysql.cpp	/^	MYSQL_RES * query(const char *str_query)$/;"	f	class:CMYSQL
+readn	client_chat_broadcast.cpp	/^int readn(int fd, char* buf, size_t len)$/;"	f
+readn	server_chat_broadcast.cpp	/^int readn(int fd, char* buf, size_t len)$/;"	f
+run_poll_handler	server_chat_broadcast.cpp	/^void* run_poll_handler(void *param)$/;"	f
+run_recv_wrmsg	server_chat_broadcast.cpp	/^void *run_recv_wrmsg(void * param)$/;"	f
 run_thread_0	client_chat_broadcast.cpp	/^void * run_thread_0(void *param)$/;"	f
 run_thread_1	client_chat_broadcast.cpp	/^void * run_thread_1(void *param)$/;"	f
 run_thread_2	client_chat_broadcast.cpp	/^void * run_thread_2(void *param)$/;"	f
-serv_addr_poll	client_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_poll;$/;"	v	typeref:struct:sockaddr_in
-serv_addr_recv	client_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_recv;$/;"	v	typeref:struct:sockaddr_in
+serv_addr_listen	client_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_listen;     \/\/ TCP listen port$/;"	v	typeref:struct:sockaddr_in
+serv_addr_listen	server_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_listen;$/;"	v	typeref:struct:sockaddr_in
+serv_addr_poll	client_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_poll;     \/\/ UDP listen port$/;"	v	typeref:struct:sockaddr_in
+serv_addr_poll	server_chat_broadcast.cpp	/^struct sockaddr_in serv_addr_poll;$/;"	v	typeref:struct:sockaddr_in
 serv_ip	client_chat_broadcast.cpp	/^const char *serv_ip   = "127.0.0.1";$/;"	v
+serv_port_listen	client_chat_broadcast.cpp	/^unsigned short serv_port_listen = 9002;$/;"	v
+serv_port_listen	server_chat_broadcast.cpp	/^static int serv_port_listen = 9002;$/;"	v	file:
 serv_port_poll	client_chat_broadcast.cpp	/^unsigned short serv_port_poll = 9001;$/;"	v
-serv_port_recv	client_chat_broadcast.cpp	/^unsigned short serv_port_recv = 9002;$/;"	v
-sleep_poll	client_chat_broadcast.cpp	/^int sleep_poll = 2;$/;"	v
-status	db.cpp	/^	bool status;$/;"	m	struct:msg	file:
+serv_port_poll	server_chat_broadcast.cpp	/^static int serv_port_poll = 9001;$/;"	v	file:
+sleep_poll	client_chat_broadcast.cpp	/^int sleep_poll = 1;$/;"	v
+status	db.cpp	/^	int status;$/;"	m	struct:msg	file:
+status	db.h	/^	int status;$/;"	m	struct:msg
 status	test_c_mysql.cpp	/^	bool status;$/;"	m	struct:msg	file:
 text	db.cpp	/^	char *text;$/;"	m	struct:msg	file:
+text	db.h	/^	char *text;$/;"	m	struct:msg
 text	test_c_mysql.cpp	/^	char *text;$/;"	m	struct:msg	file:
 timestamp	db.cpp	/^	int  timestamp;$/;"	m	struct:msg	file:
+timestamp	db.h	/^	int  timestamp;$/;"	m	struct:msg
 timestamp	test_c_mysql.cpp	/^	int  timestamp;$/;"	m	struct:msg	file:
+update	db.cpp	/^	bool update(const char *str_update)$/;"	f	class:CMYSQL
+update	db.h	/^	bool update(const char *str_update)$/;"	f	class:CMYSQL
+user	db.cpp	/^	user(char *_userid=NULL, char *_username=NULL, char *_password=NULL)$/;"	f	struct:user
 user	db.cpp	/^struct user$/;"	s	file:
+user	db.h	/^	user(char *_userid=NULL, char *_username=NULL, char *_password=NULL)$/;"	f	struct:user
+user	db.h	/^struct user$/;"	s
 user	test_c_mysql.cpp	/^struct user$/;"	s	file:
 userfrom	db.cpp	/^	char *userfrom;$/;"	m	struct:msg	file:
+userfrom	db.h	/^	char *userfrom;$/;"	m	struct:msg
 userfrom	test_c_mysql.cpp	/^	char *userfrom;$/;"	m	struct:msg	file:
-userid	client_chat_broadcast.cpp	/^const char *userid = "chng";$/;"	v
+userfrom_name	db.cpp	/^	char *userfrom_name;$/;"	m	struct:msg_name	file:
+userfrom_name	db.h	/^	char *userfrom_name;$/;"	m	struct:msg_name
+userid	client_chat_broadcast.cpp	/^const char *userid = "1024";$/;"	v
 userid	db.cpp	/^	char *userid;$/;"	m	struct:user	file:
+userid	db.h	/^	char *userid;$/;"	m	struct:user
 userid	test_c_mysql.cpp	/^	char *userid;$/;"	m	struct:user	file:
 username	db.cpp	/^	char *username;$/;"	m	class:CMYSQL	file:
 username	db.cpp	/^	char *username;$/;"	m	struct:user	file:
+username	db.h	/^	char *username;$/;"	m	class:CMYSQL
+username	db.h	/^	char *username;$/;"	m	struct:user
 username	test_c_mysql.cpp	/^	char *username;$/;"	m	class:CMYSQL	file:
 username	test_c_mysql.cpp	/^	char *username;$/;"	m	struct:user	file:
 userto	db.cpp	/^	char *userto;$/;"	m	struct:msg	file:
+userto	db.h	/^	char *userto;$/;"	m	struct:msg
 userto	test_c_mysql.cpp	/^	char *userto;$/;"	m	struct:msg	file:
+writen	client_chat_broadcast.cpp	/^int writen(int fd, char * buf, size_t len)$/;"	f
+writen	server_chat_broadcast.cpp	/^int writen(int fd, char * buf, size_t len)$/;"	f
 ~CMYSQL	db.cpp	/^	~CMYSQL()$/;"	f	class:CMYSQL	file:
+~CMYSQL	db.h	/^	~CMYSQL()$/;"	f	class:CMYSQL
 ~CMYSQL	test_c_mysql.cpp	/^	~CMYSQL()$/;"	f	class:CMYSQL	file:
 ~GC	db.cpp	/^	~GC()$/;"	f	class:CMYSQL::GC
+~GC	db.h	/^	~GC()$/;"	f	class:CMYSQL::GC
 ~GC	test_c_mysql.cpp	/^	~GC()$/;"	f	class:CMYSQL::GC
 ~MsgAction	db.cpp	/^	~MsgAction()$/;"	f	class:MsgAction
+~MsgAction	db.h	/^	~MsgAction()$/;"	f	class:MsgAction
 ~MsgAction	test_c_mysql.cpp	/^	~MsgAction()$/;"	f	class:MsgAction
 ~UserAction	db.cpp	/^	~UserAction()$/;"	f	class:UserAction
+~UserAction	db.h	/^	~UserAction()$/;"	f	class:UserAction
 ~UserAction	test_c_mysql.cpp	/^	~UserAction()$/;"	f	class:UserAction

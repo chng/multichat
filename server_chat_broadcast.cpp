@@ -27,7 +27,7 @@ poll:
         poll:userid:password:listen_port(network order)
 
 newmsg:
-        newmsg:timestamp:userfrom:text
+        newmsg:timestamp:userfrom_name:userfrom:text
 
 wrmsg:
         wrmsg:userid:password:userto:text
@@ -144,33 +144,32 @@ void* run_poll_handler(void *param)
 		{
 			if( !ua.login(userid, password) ) 
 			{
-				cerr <<"received invalid polling: "<<endl;
+				cerr <<"received invalid polling: "<<userid<<" "<<password<<endl;
 				continue;
 			}
-			msg *latest_msg =  ma.getLatestMsg("*");
-			
-			if(!latest_msg)
+			const msg_name *latest_msg = 0;
+			latest_msg = ma.getLatestMsg(userid, "%");
+			if(!latest_msg || !latest_msg[0].userfrom_name)
 			{
-				cerr <<"failed to load new msg."<<endl; 
 				continue;
 			}
-			if(latest_msg[0].timestamp)
+
+			client_addr_listen.sin_family = AF_INET;
+			client_addr_listen.sin_addr = client_addr_poll.sin_addr;
+			client_addr_listen.sin_port = client_port_listen;
+			fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
+			if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)) )
 			{
-				client_addr_listen.sin_family = AF_INET;
-				client_addr_listen.sin_addr = client_addr_poll.sin_addr;
-				client_addr_listen.sin_port = client_port_listen;
-				fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
-				if( !connect(fd_tcp_send, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)) )
+				char buf[4096];
+				for(int i=0; latest_msg[i].timestamp; i++)
 				{
-					char buf[4096];
-					for(int i=0; latest_msg[i].timestamp; i++)
-					{
-						sprintf(buf, "newmsg:%d:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom, latest_msg[i].text);
-						writen(fd_tcp_send, buf, strlen(buf));
-					}
+					sprintf(buf, "newmsg:%d:%s:%s:%s", latest_msg[i].timestamp, latest_msg[i].userfrom_name, latest_msg[i].userfrom, latest_msg[i].text);
+					writen(fd_tcp_send, buf, strlen(buf));
 				}
-				close(fd_tcp_send);
 			}
+			ma.freeResult();
+			close(fd_tcp_send);
+			delete latest_msg;
 		}
 		
 	}
@@ -201,6 +200,7 @@ void *run_recv_wrmsg(void * param)
 		{
 			char msgtype[10], userid[256], password[256], userto[256], text[4096];
 			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, userto, text);
+			cout <<buf<<endl;
 			if(strcmp("wrmsg", msgtype)==0 && ua.login(userid, password))
 				ma.insertNewMsg(userid, userto, text);
 		}
@@ -243,5 +243,6 @@ int readn(int fd, char* buf, size_t len)
 			break;
 		cur += n; len -= n;
 	}
+	*cur = 0;
 	return (int)(cur-buf);
 }

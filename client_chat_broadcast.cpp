@@ -193,9 +193,9 @@ void * run_thread_1(void *param)
 		//close(fd_tcp_listen);
 		if (0 < readn(connfd, buf, sizeof(buf)) )
 		{
-			char msgtype[10], userfrom[256], text[4096];
+			char msgtype[10], userfrom_name[256], userfrom[256], text[4096];
 			long timestamp = 0;
-			sscanf(buf, "%[^:]:%d:%[^:]:%[^:]", msgtype, &timestamp, userfrom, text);
+			sscanf(buf, "%[^:]:%ld:%[^:]:%[^:]:%[^:]", msgtype, &timestamp, userfrom_name, userfrom, text);
 			if(strcmp("newmsg", msgtype)==0)
 			{
 				if(strcmp(userid, userfrom) == 0)	
@@ -204,7 +204,7 @@ void * run_thread_1(void *param)
 				}
 				else
 				{
-					cout <<"\n"<<userfrom<<": "<<ctime(&timestamp)<<"<--- "<<text<<endl;
+					cout <<"\n"<<userfrom_name<<" ("<<userfrom<<"): "<<ctime(&timestamp)<<"<--- "<<text<<endl;
 				}
 			}
 		}
@@ -223,8 +223,11 @@ void * run_thread_2(void *param)
 		strcat(buf, userid);
 		strcat(buf, ":");
 		strcat(buf, password);
-		strcat(buf, ":*:"); // to any
-		cin.getline(buf+strlen(buf), sizeof(buf)-strlen(buf));
+		strcat(buf, ":%:"); // to any
+		int lenhead = strlen(buf);
+		gets(buf+lenhead);
+		if( !buf[lenhead] )
+			continue;
 		fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
 		if( !connect(fd_tcp_send, (const sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)))
 		{
@@ -278,6 +281,7 @@ int readn(int fd, char* buf, size_t len)
                 else if (n == 0)
                         break;
                 cur += n; len -= n;
-        }   
+        }
+		*cur = 0;   
         return (int)(cur-buf);
 }
