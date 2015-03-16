@@ -94,23 +94,32 @@ thread 2:waiting for input, and send the input as wrmsg.
           
 ====================================================================
 
-Server v2: v2 leverages epoll, based on event. 
-thread 0: read polling packets. (BLOCKING)
-          pthread_create
-          {
-            select;
-            epoll_ctl(efd, ADD, WRITE);
-          }
-          pthread_create
-          {
-            while(1)
-              epoll_wait(efd, WRITE);
-              while(...)
-                send_handler();
-          }
-
-Server v3"
-using UNBLOCK UDP socket, and recv polling packets by epoll.
+Server v2: v2 leverages epoll, based on event. using UNBLOCK UDP&TCP socket. 
+main loop: 
+	  epoll_create();
+	  while(1)
+	  {
+	  	epoll_wait()
+	  	forech(event)
+	  	{
+	  		if(read event)
+	  		{
+	  			if(poll) 
+	  			{
+	  				select;
+	  				epoll_ctl(add, write);
+	  			}
+	  			else if(wrmsg)
+	  			{
+	  				insert into mysql;
+	  			}
+	  		}
+	  		else if(write)
+	  		{
+	  			if(newmsg) send;
+	  		}
+	  	}
+	  }
 
 ====================================================================
 
