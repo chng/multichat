@@ -47,6 +47,7 @@ wrmsg:
 #include <string.h>
 #include <pthread.h>
 #include "db.h"
+#include <stdarg.h>
 
 using namespace std;
 
@@ -69,8 +70,10 @@ using namespace std;
 #define TRACE(X) (X)
 //#define TRACE(X) (X, cout <<#X<<endl);
 
-static UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
-static MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+static UserAction *ua = nullptr; 
+static MsgAction  *ma = nullptr;
+
+static int status = -1;
 
 struct sockaddr_in serv_addr_poll;
 struct sockaddr_in serv_addr_listen;
@@ -86,16 +89,18 @@ static int serv_port_poll = 9001;
 static int serv_port_listen = 9002;
 
 
-void initialize(const int __serv_port_poll, const int __serv_port_listen);
+void initialize(const char *dbhost, const char *dbuser, const char *dbpwd, const char *dbname, unsigned short dbport, const int __serv_port_poll, const int __serv_port_listen);
 void* run_poll_handler(void *param);
 void *run_recv_wrmsg(void * param);
 int writen(int fd, char * buf, size_t len);
 int readn(int fd, char * buf, size_t len);
 
+void program_exit(int n);
+
 
 int main(int argc, char ** argv)
 {
-	initialize(serv_port_poll, serv_port_listen);
+	initialize("172.12.72.74", "root", "123", "chat_broadcast",  3306, serv_port_poll, serv_port_listen);
 	pthread_t tid0, tid1;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -106,11 +111,23 @@ int main(int argc, char ** argv)
 }
 
 
-void initialize(const int __serv_port_poll, const int __serv_port_listen)
+void initialize(const char *dbhost, const char *dbuser, const char *dbpwd, const char *dbname, unsigned short dbport, const int __serv_port_poll, const int __serv_port_listen)
 {
-	//UserAction ua("172.12.72.74", "root", "123", "chat_broadcast", 3306);
-	//MsgAction  ma("172.12.72.74", "root", "123", "chat_broadcast", 3306);
+	ua = new UserAction(dbhost, dbuser, dbpwd, dbname, dbport);
+	if(!ua || !ua->isready())
+	{
+		cerr <<"no connection with the database."<<endl;
+		program_exit(1);
+	}
+	ma = new MsgAction(dbhost, dbuser, dbpwd, dbname, dbport);
 
+	if( -1 == (status = ua->getUserCount()) )
+	{
+		cerr <<"internal error. check the database or network connection."<<endl;
+		program_exit(1);
+	}
+
+	cout <<"server started."<<endl;
 	serv_port_poll   = htons(__serv_port_poll);
 	serv_port_listen = htons(__serv_port_listen);
 	
@@ -121,9 +138,10 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 	fd_udp_poll = socket(AF_INET, SOCK_DGRAM, 0);
 	if( bind(fd_udp_poll, (sockaddr*)&serv_addr_poll, sizeof(sockaddr_in)) )
 	{
-		cerr <<"fd_udp_poll bind error. fd = "<<fd_udp_poll<<"\n";
-		exit(0);
+		cerr <<"fd_udp_poll bind error. fd = "<<fd_udp_poll<<endl;
+		program_exit(1);
 	}
+
 	bzero(&serv_addr_listen, sizeof(sockaddr_in));
 	serv_addr_listen.sin_family = AF_INET;
 	serv_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -131,8 +149,8 @@ void initialize(const int __serv_port_poll, const int __serv_port_listen)
 	fd_tcp_listen = socket(AF_INET, SOCK_STREAM, 0);
 	if( bind(fd_tcp_listen, (sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)) )
 	{
-		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
-		exit(0);
+		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<endl;
+		program_exit(1);
 	}
 	
 }
@@ -159,13 +177,13 @@ void* run_poll_handler(void *param)
 		sscanf(buf, "%[^:]:%[^:]:%[^:]:%d", msgtype, userid, password, &client_port_listen);
 		if(strcmp(msgtype, MSGTYPE_POLL)==0)
 		{
-			if( !ua.login(userid, password) ) 
+			if( !ua->login(userid, password) ) 
 			{
 				cerr <<"received invalid polling: "<<userid<<" "<<password<<endl;
 				continue;
 			}
 			const msg_name *latest_msg = 0;
-			latest_msg = ma.getLatestMsg(userid, "%");
+			latest_msg = ma->getLatestMsg(userid, "%");
 			if(!latest_msg || !latest_msg[0].userfrom_name)
 			{
 				continue;
@@ -184,7 +202,7 @@ void* run_poll_handler(void *param)
 					writen(fd_tcp_send, buf, strlen(buf));
 				}
 			}
-			ma.freeResult();
+			ma->freeResult();
 			close(fd_tcp_send);
 			delete latest_msg;
 		}
@@ -218,8 +236,8 @@ void *run_recv_wrmsg(void * param)
 			char msgtype[LEN_MSGTYPE], userid[LEN_USERID], password[LEN_PASSWORD], userto[LEN_USERID], text[LEN_TEXT];
 			sscanf(buf, "%[^:]:%[^:]:%[^:]:%[^:]:%[^:]", msgtype, userid, password, userto, text);
 			cout <<buf<<endl;
-			if(strcmp(MSGTYPE_WRMSG, msgtype)==0 && ua.login(userid, password))
-				ma.insertNewMsg(userid, userto, text);
+			if(strcmp(MSGTYPE_WRMSG, msgtype)==0 && ua->login(userid, password))
+				ma->insertNewMsg(userid, userto, text, status);
 		}
 		close(connfd);
 	}
@@ -263,3 +281,11 @@ int readn(int fd, char* buf, size_t len)
 	*cur = 0;
 	return (int)(cur-buf);
 }
+
+void program_exit(int n)
+{
+	if(ua) delete ua;
+	if(ma) delete ma;
+	exit(n);
+}
+

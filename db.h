@@ -164,10 +164,10 @@ public:
 	class GC
 	{
 	public: 
-	~GC()
-	{
-		if(pmysql) delete pmysql;
-	}
+		~GC()
+		{
+			if(pmysql) delete pmysql;
+		}
 	};
 	static GC gc;
 	
@@ -280,12 +280,14 @@ struct msg_name: public msg
 #define BLL_USERACTION
 class UserAction
 {
+	bool dbready;
 	CMYSQL * pmysql;
 public:
 	UserAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)
 	{
 		pmysql = CMYSQL::getInstance(dbhost, username, key, dbname, port);
-		pmysql->connect();
+		if( pmysql && pmysql->connect() ) dbready = true;
+		else dbready = false;
 	}
 	~UserAction()
 	{
@@ -303,14 +305,15 @@ public:
 		if(atoi(row[0])) return true;
 	}
 	
-	unsigned int getUserCount()
+	int getUserCount()
 	{
 		MYSQL_RES *res = pmysql->query("select COUNT(*) from user;");
-		if(!res) return 0;
+		if(!res) return -1;
 		MYSQL_ROW row = mysql_fetch_row(res);
 		mysql_free_result(res);
 		return atoi(row[0]);
 	}
+	bool isready(){ return dbready; }
 };
 #endif
 
@@ -318,6 +321,7 @@ public:
 #define BLL_MSGACTION
 class MsgAction
 {
+	bool dbready;
 	MYSQL_RES *res;
 	CMYSQL * pmysql;
 public:
@@ -325,12 +329,15 @@ public:
 	{
 		res = NULL;
 		pmysql = CMYSQL::getInstance(dbhost, username, key, dbname, port);
-		pmysql->connect();
+		if( pmysql->connect() ) dbready = true;
+		else dbready = false;
 	}
 	~MsgAction()
 	{
 		pmysql->close();
 	}
+
+	bool isready(){ return dbready; }
 
 	const msg_name *getLatestMsg(const char *userquery, const char *userto)
 	{
@@ -366,11 +373,11 @@ public:
 		if(res) mysql_free_result(res), res = 0;
 	}
 
-	bool insertNewMsg(const char *from, const char *to, const char * text)
+	bool insertNewMsg(const char *from, const char *to, const char * text, const int status)
 	{
 		char str_query[500];
 		int timestamp = time(0);
-		sprintf(str_query, "insert into msg (timestamp, userfrom, userto, text, status) values ('%d', '%s', '%s', '%s', '1');", timestamp, from, to, text);
+		sprintf(str_query, "insert into msg (timestamp, userfrom, userto, text, status) values ('%d', '%s', '%s', '%s', '%d');", timestamp, from, to, text, status);
 		if( pmysql->update(str_query) && 0 < mysql_affected_rows(pmysql->connect()))
 		{
 			return true;
