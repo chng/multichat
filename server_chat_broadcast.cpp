@@ -99,10 +99,10 @@ int main(int argc, char ** argv)
 	pthread_t tid0, tid1;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
-	pthread_create(&tid0, &attr, run_poll_handler, NULL);
-	pthread_create(&tid1, &attr, run_recv_wrmsg, NULL);
-	pthread_join(tid0, NULL);
-	pthread_join(tid1, NULL);
+	pthread_create(&tid0, &attr, run_poll_handler, nullptr);
+	pthread_create(&tid1, &attr, run_recv_wrmsg, nullptr);
+	pthread_join(tid0, nullptr);
+	pthread_join(tid1, nullptr);
 }
 
 

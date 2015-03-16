@@ -160,13 +160,13 @@ int main(int argc, char ** argv)
 	pthread_attr_init(&attr);
 	
 	// create thread
-	pthread_create(&tid_0, &attr, run_thread_0, NULL);
-	pthread_create(&tid_1, &attr, run_thread_1, NULL);
-	pthread_create(&tid_2, &attr, run_thread_2, NULL);
+	pthread_create(&tid_0, &attr, run_thread_0, nullptr);
+	pthread_create(&tid_1, &attr, run_thread_1, nullptr);
+	pthread_create(&tid_2, &attr, run_thread_2, nullptr);
 
-	pthread_join(tid_0, NULL);
-	pthread_join(tid_1, NULL);
-	pthread_join(tid_2, NULL);
+	pthread_join(tid_0, nullptr);
+	pthread_join(tid_1, nullptr);
+	pthread_join(tid_2, nullptr);
 
 	cout <<"user "<<userid<<" exit"<<endl;
 }
