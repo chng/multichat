@@ -124,9 +124,9 @@ main loop:
 ====================================================================
 
 FUTURE IMPROVE:
-0  eliminate pthread both in client and server. 
-1  proxy between several servers and the clients.
-2  proxy between the servers and the mysql server cluster.
-3  msg encryption
-4  setup log module
-
+0  use epoll and O_NONBLOCK socket. 
+1  consider proxy between several servers and the clients. use consistant hash (ip as key) for load balance. 
+2  consider proxy between the servers and multiple mysql servers. use consistant hash (ip as key) for load balance. 
+3  multiple process. master-worker model. need to consider database connection lock and thundering herd.
+4  msg encryption
+5  setup log module
