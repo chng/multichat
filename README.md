@@ -1,4 +1,4 @@
-# chat_broadcast
+# multichat
 
 Description:
 chat_broadcast consists of a server, a remote mysql db and client. 
