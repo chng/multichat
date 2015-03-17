@@ -1,7 +1,7 @@
 # multichat
 
 Description:
-chat_broadcast consists of a server, a remote mysql db and client. 
+multichat consists of a server, a remote mysql db and client. 
 Each client will receive the latest msg sent from any other clients .
 
 Architecture:
