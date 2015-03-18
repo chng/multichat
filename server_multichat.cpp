@@ -36,6 +36,7 @@ wrmsg:
 
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -48,7 +49,7 @@ wrmsg:
 #include <pthread.h>
 #include "db.h"
 #include <stdarg.h>
-
+#include <string>
 using namespace std;
 
 #define MSGTYPE_POLL "poll"
@@ -70,6 +71,13 @@ using namespace std;
 #define TRACE(X) (X)
 //#define TRACE(X) (X, cout <<#X<<endl);
 
+static char *dbhost = nullptr;
+static char *dbname = nullptr;
+static char *dbuser = nullptr;
+static char *dbkey = nullptr;
+static unsigned short dbport = 0;
+
+
 static UserAction *ua = nullptr; 
 static MsgAction  *ma = nullptr;
 
@@ -85,9 +93,80 @@ static int fd_tcp_send = -1;  // TCP port, sending msg
 static int fd_tcp_listen = -1;// TCP port, listen for incoming msg
 
 
-static int serv_port_poll = 9001;
-static int serv_port_listen = 9002;
+static int serv_port_poll = 9001; // default
+static int serv_port_listen = 9002; //default
 
+
+int getconfig(const char *path_conf)
+{
+	ifstream fin;
+	fin.open(path_conf);
+	if(!fin.is_open()) {return -1;}
+	string str;
+	while( !fin.eof() )
+	{
+		fin >> str;
+		if(fin.eof()) break;
+		if(0==str.compare("dbhost"))
+		{
+			fin >> str;
+			dbhost = new char [str.length()+1];
+			if(!dbhost) return -1;
+			strcpy(dbhost, str.data());
+		}
+		else if(0==str.compare("dbuser"))
+		{
+			fin >> str;
+			dbuser = new char [str.length()+1];
+			if(!dbuser) return -1;
+			strcpy(dbuser, str.data());
+		}
+		else if(0==str.compare("dbkey"))
+		{
+			fin >> str;
+			dbkey = new char [str.length()+1];
+			if(!dbkey) return -1;
+			strcpy(dbkey, str.data());
+		}
+		else if(0==str.compare("dbname"))
+		{
+			fin >> str;
+			dbname = new char [str.length()+1];
+			if(!dbname) return -1;
+			strcpy(dbname, str.data());
+		}
+		else if(0==str.compare("dbport"))
+		{
+			fin >> str;
+			dbport = atoi(str.data());
+			if(dbport < 0) return -1;
+		}
+		else if(0==str.compare("serv_port_poll"))
+		{
+			fin >> str;
+			serv_port_poll = atoi(str.data());
+			if(serv_port_poll < 0) return -1;
+		}
+		else if(0==str.compare("serv_port_listen"))
+		{
+			fin >> str;
+			serv_port_listen = atoi(str.data());
+			if(serv_port_listen < 0) return -1;
+		}
+		else return -1;
+	}
+	fin.clear();
+	fin.close();
+	if(!dbhost || !dbname || !dbuser || !dbkey || !dbport || serv_port_poll<=0 || serv_port_listen<=0) return -1;
+	cout <<"db host: "<<dbhost<<endl;
+	cout <<"db user: "<<dbuser<<endl;
+	cout <<"db password: "<<dbkey<<endl;
+	cout <<"db name: "<<dbname<<endl;
+	cout <<"db port: "<<dbport<<endl;
+	cout <<"port for polling (UDP): "<<serv_port_poll<<endl;
+	cout <<"port for listening (TCP): "<<serv_port_listen<<endl;
+	return 0;
+}
 
 void initialize(const char *dbhost, const char *dbuser, const char *dbpwd, const char *dbname, unsigned short dbport, const int __serv_port_poll, const int __serv_port_listen);
 void* run_poll_handler(void *param);
@@ -100,7 +179,17 @@ void program_exit(int n);
 
 int main(int argc, char ** argv)
 {
-	initialize("172.12.72.74", "root", "123", "chat_broadcast",  3306, serv_port_poll, serv_port_listen);
+	if(argc < 2)
+	{
+		cerr <<"Usage: "<<argv[0]<<" <configure file>"<<endl;
+		program_exit(0);
+	}
+	if(0 > getconfig( argv[1]) )
+	{
+		cerr <<"Configuration error."<<endl;
+		program_exit(1);
+	}
+	initialize(dbhost, dbuser, dbkey, dbname,  dbport, serv_port_poll, serv_port_listen);
 	pthread_t tid0, tid1;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);

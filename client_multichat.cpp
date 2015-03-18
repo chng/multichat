@@ -56,6 +56,7 @@ sendmsg:
 
 
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
@@ -65,7 +66,7 @@ sendmsg:
 #include <assert.h>
 #include <arpa/inet.h>
 #include <string.h>
-#include <pthread.h>
+#include <string>
 
 using namespace std;
 
@@ -91,7 +92,7 @@ static int fd_tcp_send = -1;
 
 unsigned short client_port_listen = 10001;
 
-const char *serv_ip   = "127.0.0.1";
+char *serv_ip   = nullptr;
 unsigned short serv_port_poll = 9001;
 unsigned short serv_port_listen = 9002;
 
@@ -101,10 +102,11 @@ struct sockaddr_in client_addr_listen; // TCP listen port
 
 int sleep_poll = 1;
 
-const char *userid = "1024";
-const char * password = "123";
+char *userid = nullptr;
+char * password = nullptr;
 
-/* function declare */
+//* function declare */
+int getconfig(const char *path_conf);
 void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen);
 void * run_thread_0(void *);
 void * run_thread_1(void *);
@@ -115,11 +117,42 @@ int writen(int fd, char * buf, size_t len);
 /* end of function declare */
 
 
+int main(int argc, char ** argv)
+{
+	if(argc < 2)
+	{
+		cerr <<"Usage: "<<argv[0]<<" <configuration file>"<<endl;
+		exit(0);
+	}
+	if( 0 > getconfig(argv[1]) )
+	{
+		cerr <<"Configuration error"<<endl;
+		exit(1);
+	}
+	initialize(userid, serv_ip, serv_port_poll, serv_port_listen, client_port_listen);
+	
+	// run threads
+	pthread_t tid_0, tid_1, tid_2;	// thread id
+	pthread_attr_t attr;		// thread attributes
+	// get the default thread attributes
+	pthread_attr_init(&attr);
+	
+	// create thread
+	pthread_create(&tid_0, &attr, run_thread_0, nullptr);
+	pthread_create(&tid_1, &attr, run_thread_1, nullptr);
+	pthread_create(&tid_2, &attr, run_thread_2, nullptr);
+
+	pthread_join(tid_0, nullptr);
+	pthread_join(tid_1, nullptr);
+	pthread_join(tid_2, nullptr);
+
+	cout <<"user "<<userid<<" exit"<<endl;
+}
 
 void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen)
 {
-	userid = __userid;
-	serv_ip = __serv_ip;
+	//userid = __userid;
+	//serv_ip = __serv_ip;
 
 	serv_port_poll     =  htons( __serv_port_poll );
 	serv_port_listen     =  htons( __serv_port_listen );
@@ -146,29 +179,6 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
 		exit(0);
 	}
-}
-
-
-int main(int argc, char ** argv)
-{
-	initialize(userid, serv_ip, serv_port_poll, serv_port_listen, client_port_listen);
-	
-	// run threads
-	pthread_t tid_0, tid_1, tid_2;	// thread id
-	pthread_attr_t attr;		// thread attributes
-	// get the default thread attributes
-	pthread_attr_init(&attr);
-	
-	// create thread
-	pthread_create(&tid_0, &attr, run_thread_0, nullptr);
-	pthread_create(&tid_1, &attr, run_thread_1, nullptr);
-	pthread_create(&tid_2, &attr, run_thread_2, nullptr);
-
-	pthread_join(tid_0, nullptr);
-	pthread_join(tid_1, nullptr);
-	pthread_join(tid_2, nullptr);
-
-	cout <<"user "<<userid<<" exit"<<endl;
 }
 
 void * run_thread_0(void *param)
@@ -298,4 +308,67 @@ int readn(int fd, char* buf, size_t len)
         }
 		*cur = 0;   
         return (int)(cur-buf);
+}
+
+int getconfig(const char *path_conf)
+{
+	ifstream fin;
+	fin.open(path_conf);
+	if(!fin.is_open()) {return -1;}
+	string str;
+	while( !fin.eof() )
+	{
+		fin >> str;
+		if(fin.eof()) break;
+		if(0==str.compare("serv_ip"))
+		{
+			fin >> str;
+			serv_ip = new char [str.length()+1];
+			if(!serv_ip) return -1;
+			strcpy(serv_ip, str.data());
+		}
+		else if(0==str.compare("userid"))
+		{
+			fin >> str;
+			userid = new char [str.length()+1];
+			if(!userid) return -1;
+			strcpy(userid, str.data());
+		}
+		else if(0==str.compare("password"))
+		{
+			fin >> str;
+			password = new char [str.length()+1];
+			if(!password) return -1;
+			strcpy(password, str.data());
+		}
+		else if(0==str.compare("client_port_listen"))
+		{
+			fin >> str;
+			client_port_listen = atoi(str.data());
+			if(client_port_listen <= 0) return -1;
+		}
+		else if(0==str.compare("serv_port_poll"))
+		{
+			fin >> str;
+			serv_port_poll = atoi(str.data());
+			if(serv_port_poll <= 0) return -1;
+		}
+		else if(0==str.compare("serv_port_listen"))
+		{
+			fin >> str;
+			serv_port_listen = atoi(str.data());
+			if(serv_port_listen <= 0) return -1;
+		}
+		else return -1;
+	}
+	fin.clear();
+	fin.close();
+	if(!userid || !password || !serv_ip || serv_port_poll<=0 || serv_port_listen<=0 || client_port_listen<=0) return 1;
+	cout <<"client_port_poll: "<<client_port_listen<<endl;
+	cout <<"server ip: "<<serv_ip<<endl;
+	cout <<"serv_port_poll: "<<serv_port_poll<<endl;;
+	cout <<"serv_port_listen: "<<serv_port_listen<<endl;
+	cout <<"Your userID: "<<userid<<endl;
+	cout <<"Your password: "<<password;
+	return 0;
 }
