@@ -120,7 +120,7 @@ void initialize(const char *dbhost, const char *dbuser, const char *dbpwd, const
 		program_exit(1);
 	}
 	ma = new MsgAction(dbhost, dbuser, dbpwd, dbname, dbport);
-
+	
 	if( -1 == (status = ua->getUserCount()) )
 	{
 		cerr <<"internal error. check the database or network connection."<<endl;

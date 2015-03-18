@@ -14,7 +14,7 @@ client:
 	$(CC) client_multichat.cpp $(LIB_PTHREAD) $(CFLAGS) -o client_multichat.bin
 
 server:
-	$(CC) db.h server_multichat.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_multichat.bin
+	$(CC) singleton.h db.h server_multichat.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_multichat.bin
 
 clean:
 	rm -rf *.a *.o *.so *.bin

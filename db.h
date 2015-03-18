@@ -24,6 +24,10 @@
 using namespace std;
 #endif
 
+#ifndef SINGLETON_H
+#define SINGLETON_H
+#include "singleton.h"
+#endif
 
 #ifndef DEEP_COPY_STR
 #define DEEP_COPY_STR(to, from) if(!from) to = new char [strlen(from)+1], strcpy(to, from);
@@ -38,7 +42,7 @@ struct user
 	char *username;
 	char *password;
 
-	user(char *_userid=NULL, char *_username=NULL, char *_password=NULL)
+	user(char *_userid=nullptr, char *_username=nullptr, char *_password=nullptr)
 	:userid(_userid), username(_username), password(_password) 
 	{
 		//DEEP_COPY_STR(userid, _userid)
@@ -79,7 +83,7 @@ struct msg
 	char *userto;
 	char *text;
 
-	msg(int _status=0, int _ts=0, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL)
+	msg(int _status=0, int _ts=0, char *_userfrom=nullptr, char *_userto=nullptr, char *_text=nullptr)
 	:status(_status), timestamp(_ts), userfrom(_userfrom), userto(_userto), text(_text)
 	{
 		//DEEP_COPY_STR(userfrom, _userfrom)
@@ -125,9 +129,18 @@ class CMYSQL
 	char *dbname;
 	unsigned int port;
 	bool isconn;
-	static CMYSQL *pmysql;
 
-	CMYSQL( const char *__dbhost, 
+public: 
+
+	CMYSQL()
+	{
+		dbhost = username = dbname = key = nullptr;	
+		port = -1;
+		isconn =false;
+		conn = nullptr;
+	}
+
+	void initialize( const char *__dbhost, 
 		const char *__username,
 		const char *__key,
 		const char *__dbname,
@@ -146,52 +159,28 @@ class CMYSQL
 		port = __port;
 		conn = mysql_init(0);
 	}
+
 	~CMYSQL()
 	{
 		if(dbhost) delete dbhost;
-		dbhost = NULL;
+		dbhost = nullptr;
 		if(username) delete username;
-		username = NULL;
+		username = nullptr;
 		if(key) delete key;
-		key = NULL;
+		key = nullptr;
 		if(dbname) delete dbname;
-		dbname = NULL;
+		dbname = nullptr;
 		if(conn)  mysql_close(conn);
-		conn = NULL;
-	}
-public:
-	
-	class GC
-	{
-	public: 
-		~GC()
-		{
-			if(pmysql) delete pmysql;
-		}
-	};
-	static GC gc;
-	
-	static CMYSQL *getInstance( 	const char *__dbhost, 
-				const char *__username,
-				const char *__key,
-				const char *__dbname,
-				const unsigned int __port
-		)
-	{
-		if(!pmysql)
-			pmysql = new CMYSQL (__dbhost, __username, __key, __dbname, __port);
-		return pmysql;
-	}
-	CMYSQL *getInstance()
-	{
-		return pmysql;
+		conn = nullptr;
 	}
 
+public:
+	
 	MYSQL * connect()
 	{
 		if(!isconn)
 		{
-			conn = mysql_real_connect(conn, dbhost, username, key, dbname, port, NULL, 0);
+			conn = mysql_real_connect(conn, dbhost, username, key, dbname, port, nullptr, 0);
 			if(conn) isconn = true;
 		}
 		return conn;
@@ -209,9 +198,9 @@ public:
 	MYSQL_RES * query(const char *str_query)
 	{
 		if(!isconn)
-			return NULL;
+			return nullptr;
 		if( mysql_query(conn, str_query) )
-			return NULL;
+			return nullptr;
 		return mysql_store_result(conn);
 	}
 
@@ -223,8 +212,6 @@ public:
 		return mysql_affected_rows(conn);
 	}
 };
-CMYSQL * CMYSQL::pmysql = NULL;
-
 #endif
 
 /* BLL */
@@ -235,7 +222,7 @@ struct msg_name: public msg
 {
 	char *userfrom_name;
 	
-	msg_name(long _ts=0, int _status=0, char *_userfrom_name=NULL, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL )
+	msg_name(long _ts=0, int _status=0, char *_userfrom_name=nullptr, char *_userfrom=nullptr, char *_userto=nullptr, char *_text=nullptr )
 	:userfrom_name(_userfrom_name), msg(_status, _ts, _userfrom, _userto, _text)
 	{
 		//DEEP_COPY_STR(userfrom_name, _userfrom_name);
@@ -258,7 +245,7 @@ struct msg_name: public msg
 		if(m.text) text = new char [strlen(m.text)+1], strcpy(text, m.text);
 	}
 
-	msg_name & copy(long _ts=0, int _status=0, char *_userfrom_name=NULL, char *_userfrom=NULL, char *_userto=NULL, char *_text=NULL )
+	msg_name & copy(long _ts=0, int _status=0, char *_userfrom_name=nullptr, char *_userfrom=nullptr, char *_userto=nullptr, char *_text=nullptr )
 	{
 		status = _status;
 		timestamp = _ts;
@@ -285,8 +272,13 @@ class UserAction
 public:
 	UserAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)
 	{
-		pmysql = CMYSQL::getInstance(dbhost, username, key, dbname, port);
-		if( pmysql && pmysql->connect() ) dbready = true;
+		pmysql = singleton<CMYSQL>::getInstance();
+		if(pmysql) 
+		{
+			pmysql->initialize(dbhost, username, key, dbname, port);
+			if( pmysql->connect() ) dbready = true;
+			else dbready = false;
+		}
 		else dbready = false;
 	}
 	~UserAction()
@@ -327,9 +319,14 @@ class MsgAction
 public:
 	MsgAction(const char *dbhost, const char *username, const char *key, const char *dbname, unsigned int port)
 	{
-		res = NULL;
-		pmysql = CMYSQL::getInstance(dbhost, username, key, dbname, port);
-		if( pmysql->connect() ) dbready = true;
+		res = nullptr;
+		pmysql = singleton<CMYSQL>::getInstance();
+		if( pmysql )
+		{
+			pmysql->initialize(dbhost, username, key, dbname, port);
+			if( pmysql->connect() ) dbready = true;
+			else dbready = false;
+		}
 		else dbready = false;
 	}
 	~MsgAction()
@@ -365,7 +362,7 @@ public:
 			}
 			return ret;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	void freeResult()
