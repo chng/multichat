@@ -1,7 +1,7 @@
 template <typename T>
 class singleton
 {
-private:
+public:
     //pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
     singleton() {}
     singleton(const singleton &s) {}
@@ -19,7 +19,7 @@ public:
         static T *pinstance;
         GC()
         {
-            pinstance = new T();
+            if(!pinstance) pinstance = new T();
         }
         ~GC()
         {
@@ -27,6 +27,7 @@ public:
             {
     //            pthread_mutex_lock(&mutex_lock);
                     delete pinstance;
+					pinstance = nullptr;
     //            pthread_mutex_unlock(&mutex_lock);
             }
         }

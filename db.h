@@ -212,6 +212,10 @@ public:
 		return mysql_affected_rows(conn);
 	}
 };
+
+//Singleton:
+singleton<CMYSQL> singleton_cmysql;
+
 #endif
 
 /* BLL */
