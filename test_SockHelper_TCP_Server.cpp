@@ -12,11 +12,13 @@ int main()
 	while(1)
 	{
 		TCPHelper_SendTo tmp = h.acceptFrom();
-		if(tmp.getSocketFD() < 0)
-			exit(0);
-		tmp.readn(buf, sizeof(buf));
-		cout <<buf<<endl;
-		close(fd);
+		if(fork() == 0)
+		{
+			if(tmp.getSocketFD() < 0)
+				exit(0);
+			tmp.readn(buf, sizeof(buf));
+			cout <<buf<<endl;
+		}
 	}		
 	return 0;
 }
