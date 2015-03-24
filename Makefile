@@ -17,4 +17,4 @@ server:
 	$(CC) singleton.h db.h server_multichat.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_multichat.bin
 
 clean:
-	rm -rf *.a *.o *.so *.bin
+	rm -rf *.a *.o *.so *.bin *.out

@@ -217,6 +217,7 @@ void initialize(const char *dbhost, const char *dbuser, const char *dbpwd, const
 	}
 
 	cout <<"server started."<<endl;
+
 	serv_port_poll   = htons(__serv_port_poll);
 	serv_port_listen = htons(__serv_port_listen);
 	
@@ -373,8 +374,8 @@ int readn(int fd, char* buf, size_t len)
 
 void program_exit(int n)
 {
-	if(ua) delete ua;
-	if(ma) delete ma;
+	if(ua) delete ua, ua = nullptr;
+	if(ma) delete ma, ma = nullptr;
 	exit(n);
 }
 

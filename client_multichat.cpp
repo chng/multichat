@@ -108,9 +108,9 @@ char * password = nullptr;
 //* function declare */
 int getconfig(const char *path_conf);
 void initialize(const char * __userid, const char *__serv_ip, int __serv_port_poll, int __serv_port_listen, int __client_port_listen);
-void * run_thread_0(void *);
-void * run_thread_1(void *);
-void * run_thread_2(void *);
+void * run_thread_poll(void *);
+void * run_thread_listen(void *);
+void * run_thread_wrmsg(void *);
 
 int readn(int fd, char* buf, size_t len);
 int writen(int fd, char * buf, size_t len);
@@ -138,9 +138,9 @@ int main(int argc, char ** argv)
 	pthread_attr_init(&attr);
 	
 	// create thread
-	pthread_create(&tid_0, &attr, run_thread_0, nullptr);
-	pthread_create(&tid_1, &attr, run_thread_1, nullptr);
-	pthread_create(&tid_2, &attr, run_thread_2, nullptr);
+	pthread_create(&tid_0, &attr, run_thread_poll, nullptr);
+	pthread_create(&tid_1, &attr, run_thread_listen, nullptr);
+	pthread_create(&tid_2, &attr, run_thread_wrmsg, nullptr);
 
 	pthread_join(tid_0, nullptr);
 	pthread_join(tid_1, nullptr);
@@ -181,7 +181,7 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 	}
 }
 
-void * run_thread_0(void *param)
+void * run_thread_poll(void *param)
 {
 	cout <<"thread poll running"<<"\n";
 	char buf[LEN_MSG_POLL];
@@ -198,7 +198,7 @@ void * run_thread_0(void *param)
 	}
 }
 
-void * run_thread_1(void *param)
+void * run_thread_listen(void *param)
 {
 	cout <<"thread listen running"<<endl;
 
@@ -237,7 +237,7 @@ void * run_thread_1(void *param)
 	
 }
 
-void * run_thread_2(void *param)
+void * run_thread_wrmsg(void *param)
 {
 	cout <<"thread send running"<<"\n";
 	char buf[LEN_MSG_WRMSG];
