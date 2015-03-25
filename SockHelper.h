@@ -17,6 +17,8 @@
 #include <string>
 using namespace std;
 
+#define DEBUG(X) cout<<#X<<" = "<<X<<endl
+//#define DEBUG(X) 
 
 typedef struct sockaddr_in SA_IN;
 typedef struct sockaddr SA;
@@ -29,8 +31,6 @@ typedef unsigned short port_t;
 //abstract parent class for sockethelper_listen and sockethelp_send
 class SockHelper
 {
-public:
-
 
 protected:
 	SA_IN addr;
@@ -47,7 +47,7 @@ public:
 	{
 		close(sockfd);
 	}
-	// initialize by sockfd and addr
+	// initialize by sockfd and addr (for special usage)
 	SockHelper(int _sockfd, const SA_IN &_addr):sockfd(_sockfd), addr(_addr){}
 	
 	// socktype: SOCK_DGRAM / SOCK_STREAM
@@ -58,15 +58,14 @@ public:
 		addr.sin_family = AF_INET;
 		addr.sin_port = htons(port);
 		addr.sin_addr.s_addr = htonl(INADDR_ANY);
-		if(socktype == SOCK_DGRAM)
-			sockfd = socket( AF_INET, socktype, 0 );
-		else if(socktype == SOCK_STREAM)
+		if(socktype == SOCK_DGRAM || socktype == SOCK_STREAM)
 			sockfd = socket( AF_INET, socktype, 0 );
 		if( sockfd>=0 && bind( sockfd, (const SA* )&addr, sizeof(SA_IN) ))
 		{
 			close(sockfd);
 			sockfd  = -1;
 		}
+		cerr <<"socket is create : "<<sockfd<<endl;
 	}
 	// else if the addr is specified, the constructor will create a socket for sending data.
 	// the addr canbe given by const string or struct in_addr.
@@ -110,8 +109,7 @@ public:
 	}
 };
 
-// TCP socket uses read/write or send/recv
-// UDP socket uses recvfrom/sendto
+
 
 class SockHelper_TCP: public SockHelper
 {
@@ -145,50 +143,28 @@ public:
 /*                  Send/Recv ADT                           */
 /************************************************************/
 
+// TCP socket uses read/write or send/recv
+// UDP socket uses recvfrom/sendto
+
 class I_RWHelper
 {
+protected:
+	int fd;
+	void setFD(int FD) {fd = FD;}
 public:
+	I_RWHelper(){}
+	I_RWHelper(int _fd):fd(_fd){}
 	virtual int readn (char * buf, size_t len) = 0;
 	virtual int writen(char * buf, size_t len) = 0;
 };
 
-
+// ?
 class RWHelper_TCP: public I_RWHelper
 {
 public:
-};
-
-class RWHelper_UDP: public I_RWHelper
-{
-public:
-};
-
-
-/************************************************************/
-/*                  Send/Recv ADT                           */
-/************************************************************/
-
-// addr should be specified.
-class TCPHelper_SendTo: public SockHelper_TCP, I_RWHelper
-{
-public:
-	~TCPHelper_SendTo(){}
-
-	TCPHelper_SendTo(int _sockfd, const SA_IN &_addr):SockHelper_TCP(_sockfd, _addr){}
-
-	TCPHelper_SendTo(const char *ip, port_t _port):SockHelper_TCP(ip, _port){}
-	TCPHelper_SendTo(struct in_addr &_inaddr, port_t _port):SockHelper_TCP(_inaddr, _port){}
-
-	bool connectTo()
-	{
-		if( 0 == connect(sockfd, (const SA *)&addr, sizeof(SA_IN)) )
-			return true;
-		return false;
-	}
-
 	int writen(char *buf, size_t len)
 	{
-		int fd = sockfd;
+		//int fd = sockfd;
 		if(fd<0) return -1;
 		// if sockfd is invalid
 		char *cur = buf;
@@ -209,7 +185,7 @@ public:
 
 	int readn(char *buf, size_t len)
 	{
-		int fd = sockfd;
+		//int fd = sockfd;
 		if(fd<0) return -1;
 		// if sockfd is invalid
 		char *cur = buf;
@@ -231,6 +207,74 @@ public:
 		return (int)(cur-buf);
 	}
 };
+// ?
+class RWHelper_UDP: public I_RWHelper
+{
+	SA_IN addrremote;
+
+protected:
+	void setRemoteAddr(SA_IN &addr)
+	{
+		addrremote = addr;
+	}
+
+public:
+	
+	int readn (char *buf, size_t len)
+	{
+		//int fd = sockfd;
+		socklen_t lenaddr = sizeof(SA_IN);
+		return recvfrom(fd, buf, len, 0, (SA*)&addrremote, &lenaddr); 
+	}
+	
+	int writen(char *buf, size_t len)
+	{
+		//int fd = sockfd;
+		socklen_t lenaddr = sizeof(SA_IN);
+		return sendto(fd, buf, len, 0, (SA *)&addrremote, lenaddr);	
+	}
+
+
+
+	SA_IN getRemoteAddr()
+	{
+		return addrremote;
+	}
+};
+
+
+/************************************************************/
+/*                      Final ADT                           */
+/************************************************************/
+
+// addr should be specified.
+class TCPHelper_SendTo: public SockHelper_TCP, public RWHelper_TCP
+{
+public:
+	~TCPHelper_SendTo(){}
+
+	TCPHelper_SendTo(int _sockfd, const SA_IN &_addr):SockHelper_TCP(_sockfd, _addr)
+	{
+		setFD(_sockfd);
+	}
+
+	TCPHelper_SendTo(const char *ip, port_t _port):SockHelper_TCP(ip, _port)
+	{
+		setFD(sockfd);
+	}
+
+	TCPHelper_SendTo(struct in_addr &_inaddr, port_t _port):SockHelper_TCP(_inaddr, _port)
+	{
+		setFD(sockfd);
+	}
+
+	bool connectTo()
+	{
+		if( sockfd >=0 && !connect(sockfd, (const SA *)&addr, sizeof(SA_IN)) )
+			return true;
+		return false;
+	}
+};
 
 // addr should be ANY
 class TCPHelper_Listen: public SockHelper_TCP 
@@ -239,9 +283,9 @@ public:
 	~TCPHelper_Listen(){}
 	TCPHelper_Listen(port_t _port):SockHelper_TCP(_port){}
 
-	bool listenFrom()
+	bool listenFrom(unsigned BACKLOG)
 	{
-		if( listen(sockfd, port) )
+		if( listen(sockfd, BACKLOG) )
 		{
 			sockfd = -1;
 			return false;
@@ -260,26 +304,28 @@ public:
 
 
 // UDP socket cannot listen
-class UDPHelper: public SockHelper_UDP, I_RWHelper
+class UDPHelper: public SockHelper_UDP, public RWHelper_UDP
+
 {
 public:	
 	~UDPHelper(){}
-	UDPHelper(port_t _port):SockHelper_UDP(_port){}	
-	UDPHelper(const char *ip, port_t _port):SockHelper_UDP(ip, _port){}
-	UDPHelper(struct in_addr &_inaddr, port_t _port):SockHelper_UDP(_inaddr, _port){}
-
-	int readn (char *buf, size_t len)
+	UDPHelper(port_t _port):SockHelper_UDP(_port)
 	{
-		int fd = sockfd;
-		socklen_t lenaddr = sizeof(SA_IN);
-		return recvfrom(fd, buf, len, 0, (SA*)&addr, &lenaddr); 
+		setFD(sockfd);
+		//setRemoteAddr(addr);
+		DEBUG(fd);
+	}	
+	UDPHelper(const char *ip, port_t _port):SockHelper_UDP(ip, _port)
+	{
+		setFD(sockfd);
+		setRemoteAddr(addr);
+		DEBUG(fd);
 	}
-	
-	int writen(char *buf, size_t len)
+	UDPHelper(struct in_addr &_inaddr, port_t _port):SockHelper_UDP(_inaddr, _port)
 	{
-		int fd = sockfd;
-		socklen_t lenaddr = sizeof(SA_IN);
-		return sendto(fd, buf, len, 0, (SA *)&addr, lenaddr);	
+		setFD(sockfd);
+		setRemoteAddr(addr);
+		DEBUG(fd);
 	}
 };
 

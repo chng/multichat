@@ -5,7 +5,7 @@ int main()
 {
 	char buf[1024];
 	TCPHelper_Listen h(9002);
-	if( !h.listenFrom() )
+	if( !h.listenFrom(65535) )
 		exit(0);
 	int fd;
 	

@@ -7,10 +7,13 @@ public:
     singleton(const singleton &s) {}
     singleton & operator = (const singleton & s) {}
 
+	//static T *pinstance;
+
 public:
     static T *getInstance()
     {
         return GC::pinstance;
+        //return pinstance;
     }
 
     class GC
@@ -32,9 +35,10 @@ public:
             }
         }
     };
-    static GC gc;
+    GC gc; // do not use static here! otherwise the constructor will not be called.
 };
 template <typename T>
 T * singleton<T>::GC::pinstance = nullptr;
+//T * singleton<T>::pinstance = nullptr;
 
 

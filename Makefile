@@ -11,10 +11,10 @@ cmysql:
 	$(CC) test_c_mysql.cpp $(LIB_MYSQL) $(CFLAGS) -o test_c_mysql.bin
 
 client:
-	$(CC) client_multichat.cpp $(LIB_PTHREAD) $(CFLAGS) -o client_multichat.bin
+	$(CC) SockHelper.h client_multichat.cpp $(LIB_PTHREAD) $(CFLAGS) -o client_multichat.bin
 
 server:
-	$(CC) singleton.h db.h server_multichat.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_multichat.bin
+	$(CC) SockHelper.h singleton.h db.h server_multichat.cpp $(LIB_MYSQL) $(LIB_PTHREAD) $(CFLAGS) -o server_multichat.bin
 
 clean:
 	rm -rf *.a *.o *.so *.bin *.out

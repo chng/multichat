@@ -54,7 +54,7 @@ sendmsg:
 
 */
 
-
+#include "SockHelper.h"
 #include <iostream>
 #include <fstream>
 #include <stdio.h>
@@ -96,9 +96,12 @@ char *serv_ip   = nullptr;
 unsigned short serv_port_poll = 9001;
 unsigned short serv_port_listen = 9002;
 
-struct sockaddr_in serv_addr_poll;     // UDP listen port
-struct sockaddr_in serv_addr_listen;     // TCP listen port
-struct sockaddr_in client_addr_listen; // TCP listen port
+//struct sockaddr_in serv_addr_poll;     // UDP listen port
+static UDPHelper *cli_poll = nullptr;
+//struct sockaddr_in serv_addr_listen;     // TCP listen port
+//static TCPHelper_SendTo * serv_listen = nullptr;
+//struct sockaddr_in client_addr_listen; // TCP listen port
+static TCPHelper_Listen * cli_listen = nullptr;
 
 int sleep_poll = 1;
 
@@ -154,30 +157,27 @@ void initialize(const char * __userid, const char *__serv_ip, int __serv_port_po
 	//userid = __userid;
 	//serv_ip = __serv_ip;
 
-	serv_port_poll     =  htons( __serv_port_poll );
-	serv_port_listen     =  htons( __serv_port_listen );
-	client_port_listen =  htons( __client_port_listen );
-
-	
-	bzero(&serv_addr_poll, sizeof(sockaddr_in));
-	serv_addr_poll.sin_family = AF_INET;
-	inet_pton(AF_INET, serv_ip, &serv_addr_poll.sin_addr);
-	serv_addr_poll.sin_port = serv_port_poll;
-
-	bzero(&serv_addr_listen, sizeof(sockaddr_in));
-	serv_addr_listen.sin_family = AF_INET;
-	inet_pton(AF_INET, serv_ip, &serv_addr_listen.sin_addr);
-	serv_addr_listen.sin_port = serv_port_listen;
-
-	bzero(&client_addr_listen, sizeof(sockaddr_in));
-	client_addr_listen.sin_family = AF_INET;
-	client_addr_listen.sin_addr.s_addr = htonl(INADDR_ANY);
-	client_addr_listen.sin_port = client_port_listen;
-	fd_tcp_listen = socket(PF_INET, SOCK_STREAM, 0);
-	if( bind(fd_tcp_listen, (const sockaddr*)&client_addr_listen, sizeof(sockaddr_in)))
+	cli_poll = new UDPHelper(serv_ip, serv_port_poll);
+	if(cli_poll->getSocketFD() < 0)
 	{
-		cerr <<"fd_tcp_listen bind error. fd = "<<fd_tcp_listen<<"\n";
-		exit(0);
+		cerr <<"polling socket not created."<<endl;
+		exit(1);
+	}
+	
+	/*
+	serv_listen = new TCPHelper_SendTo(serv_ip, serv_port_listen);	
+	if(serv_listen->getSocketFD() < 0)
+	{
+		cerr <<"wrmsg socket not created."<<endl;
+		exit(1);
+	}
+	*/
+
+	cli_listen = new TCPHelper_Listen(client_port_listen);
+	if(cli_listen->getSocketFD() < 0)
+	{
+		cerr <<"newmsg socket not created."<<endl;
+		exit(1);
 	}
 }
 
@@ -186,14 +186,9 @@ void * run_thread_poll(void *param)
 	cout <<"thread poll running"<<"\n";
 	char buf[LEN_MSG_POLL];
 	sprintf(buf, MSGTYPE_POLL ":%s:%s:%d", userid, password, client_port_listen); 
-	//cout <<buf<<endl;
-	while(0 > fd_udp_poll)
-	{
-		fd_udp_poll = socket(AF_INET, SOCK_DGRAM, 0);
-	}
 	while(1)
 	{
-		sendto(fd_udp_poll, buf, strlen(buf), 0, (const sockaddr*)&serv_addr_poll, sizeof(serv_addr_poll));
+		cli_poll->writen(buf, strlen(buf));
 		sleep(sleep_poll);
 	}
 }
@@ -202,20 +197,22 @@ void * run_thread_listen(void *param)
 {
 	cout <<"thread listen running"<<endl;
 
-	if (listen(fd_tcp_listen, 65535) )
+	if ( !cli_listen->listenFrom(65535) )
 	{
-		cerr <<"fd_tcp_listen listen error fd = "<<fd_tcp_listen<<"\n";
+		cerr <<"listen for newmsg error"<<endl;
 		pthread_exit(0);
 	}
-	struct sockaddr_in serv_addr_send;
 	int n;
-	socklen_t lenaddr = sizeof(serv_addr_send);
 	char buf[LEN_MSG_NEWMSG];
 	while(1)
 	{
-		int connfd = accept(fd_tcp_listen, (sockaddr*)&serv_addr_send, &lenaddr);
-		//close(fd_tcp_listen);
-		if (0 < readn(connfd, buf, sizeof(buf)) )
+		TCPHelper_SendTo serv_newmsg = cli_listen->acceptFrom();
+		if(serv_newmsg.getSocketFD() < 0)
+		{
+			cerr <<"connection lost"<<endl;
+			continue;
+		}
+		if (0 < serv_newmsg.readn(buf, sizeof(buf)) )
 		{
 			char msgtype[10], userfrom_name[256], userfrom[256], text[4096];
 			long timestamp = 0;
@@ -232,7 +229,6 @@ void * run_thread_listen(void *param)
 				}
 			}
 		}
-		close(connfd);
 	}
 	
 }
@@ -252,63 +248,19 @@ void * run_thread_wrmsg(void *param)
 		cin.getline(buf+lenhead, sizeof(buf)-lenhead);
 		if( !buf[lenhead] )
 			continue;
-		fd_tcp_send = socket(AF_INET, SOCK_STREAM, 0);
-		if( !connect(fd_tcp_send, (const sockaddr*)&serv_addr_listen, sizeof(sockaddr_in)))
+		TCPHelper_SendTo cli_send(serv_ip, serv_port_listen);
+		if( cli_send.connectTo())
 		{
-			if(0 < send(fd_tcp_send, buf, strlen(buf), 0))
-				;//cout <<"---> "<<buf<<endl;
-			else
+			if(0 > cli_send.writen(buf, strlen(buf)))
 				cerr <<"-x-> "<<buf<<endl;
-			//recv(sfd, buf, BUF_SIZE-1, 0);
-			//printf("%s\n", buf);
 		}
 		else
 		{
 			cerr <<"no connection"<<endl;
 		}
-		close(fd_tcp_send);
 	}
 }
 
-
-int writen(int fd, char * buf, size_t len)
-{
-        char * cur = buf;
-        int n = -1; 
-        while(len>0)
-        {   
-                n = write(fd, cur, len);
-                if (n<=0)
-                {   
-                        if(errno == EINTR) continue;
-                        else return -1; 
-                }   
-                len -= n;
-                cur += n;
-        }   
-        return 0;
-}
-
-int readn(int fd, char* buf, size_t len)
-{
-        char *cur = buf;
-        int n = -1; 
-        while (len>0)
-        {   
-                n = read(fd, cur, len);
-                if (n == -1) 
-                {   
-                        if (errno == EINTR)
-                                continue;
-                        else break;
-                }   
-                else if (n == 0)
-                        break;
-                cur += n; len -= n;
-        }
-		*cur = 0;   
-        return (int)(cur-buf);
-}
 
 int getconfig(const char *path_conf)
 {
