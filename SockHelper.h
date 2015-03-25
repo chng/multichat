@@ -28,6 +28,8 @@ typedef unsigned short port_t;
 /*                  TCP/UDP Socket ADT                      */
 /************************************************************/
 
+#ifndef SOCKHELPER
+#define SOCKHELPER
 //abstract parent class for sockethelper_listen and sockethelp_send
 class SockHelper
 {
@@ -108,9 +110,11 @@ public:
 		return true;
 	}
 };
+#endif
 
 
-
+#ifndef SOCKHELPER_TCP
+#define SOCKHELPER_TCP
 class SockHelper_TCP: public SockHelper
 {
 	virtual void IamAbstract(){}
@@ -125,6 +129,11 @@ public:
 	SockHelper_TCP(struct in_addr &_inaddr, port_t _port):SockHelper(_inaddr, _port, SOCK_STREAM){}
 };
 
+#endif
+
+
+#ifndef SOCKHELPER_UDP
+#define SOCKHELPER_UDP
 class SockHelper_UDP: public SockHelper
 {
 	virtual void IamAbstract(){}
@@ -137,6 +146,7 @@ public:
 	SockHelper_UDP(struct in_addr &_inaddr, port_t _port):SockHelper(_inaddr, _port, SOCK_DGRAM){}
 
 };
+#endif
 
 
 /************************************************************/
@@ -146,6 +156,8 @@ public:
 // TCP socket uses read/write or send/recv
 // UDP socket uses recvfrom/sendto
 
+#ifndef I_RWHELPER
+#define I_RWHELPER
 class I_RWHelper
 {
 protected:
@@ -157,7 +169,12 @@ public:
 	virtual int readn (char * buf, size_t len) = 0;
 	virtual int writen(char * buf, size_t len) = 0;
 };
+#endif
 
+
+
+#ifndef RWHELPER_TCP
+#define RWHELPER_TCP
 // ?
 class RWHelper_TCP: public I_RWHelper
 {
@@ -207,6 +224,10 @@ public:
 		return (int)(cur-buf);
 	}
 };
+#endif
+
+#ifndef RWHELPER_UDP
+#define RWHELPER_UDP
 // ?
 class RWHelper_UDP: public I_RWHelper
 {
@@ -234,19 +255,19 @@ public:
 		return sendto(fd, buf, len, 0, (SA *)&addrremote, lenaddr);	
 	}
 
-
-
 	SA_IN getRemoteAddr()
 	{
 		return addrremote;
 	}
 };
-
+#endif
 
 /************************************************************/
 /*                      Final ADT                           */
 /************************************************************/
 
+#ifndef TCPHELPER_SENDTO
+#define TCPHELPER_SENDTO 
 // addr should be specified.
 class TCPHelper_SendTo: public SockHelper_TCP, public RWHelper_TCP
 {
@@ -275,7 +296,11 @@ public:
 		return false;
 	}
 };
+#endif
 
+
+#ifndef TCPHELPER_LISTEN
+#define TCPHELPER_LISTEN 
 // addr should be ANY
 class TCPHelper_Listen: public SockHelper_TCP 
 {
@@ -301,8 +326,11 @@ public:
 		return TCPHelper_SendTo(fd, cli_addr);
 	}
 };
+#endif
 
 
+#ifndef UDPHELPER
+#define UDPHELPER
 // UDP socket cannot listen
 class UDPHelper: public SockHelper_UDP, public RWHelper_UDP
 
@@ -328,30 +356,5 @@ public:
 		DEBUG(fd);
 	}
 };
+#endif
 
-
-/*
-int main()
-{
-	//TDPHelper_Listen
-	//TCPHelper_SendTo
-	//UDPHelper
-
-	TCPHelper_Listen h_tcplisten(9001);
-	TCPHelper_SendTo h_tcpsend("127.0.0.1", 9002);
-	UDPHelper h_udplisten(9003);
-	UDPHelper h_udp("127.0.0.1", 9004);
-	SockHelper *h = nullptr;
-
-	h = &h_tcplisten;
-	cout <<h->getSocketFD()<<endl;
-	h = &h_tcpsend;
-	cout <<h->getSocketFD()<<endl;
-	h = &h_udplisten;
-	cout <<h->getSocketFD()<<endl;
-	h = &h_udp;
-	cout <<h->getSocketFD()<<endl;
-	
-	return 0;
-}
-// */
