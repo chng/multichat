@@ -6,8 +6,8 @@ Each client will receive the latest msg sent from any other clients .
 
 Architecture:
 |+++++++++++++++++++++++++++++++++++++++++|
-|                                         |
-|         |--------|         |--------|   |
+|          ________           ________    |
+|         |        |         |    |   |
 |         | server | <====>  |  MySQL |   |
 |         |________|         |________|   |
 | hello /|     |hello \   hello           |
@@ -123,12 +123,13 @@ main loop:
 
 ====================================================================
 
-The classes in SockHelper.h encapsulate common used socket operation (create, bind, listen. accept, read and write.). The classes are organized as follows:
+The classes in SockHelper.h encapsulate common used socket operation (create, bind, listen. accept, read and write). 
+The classes are organized as follows:
 
-     	       ____________                            ____________
-	          |            |                          |            |
-	    	  | SockHelper |                          | I_RWHelper | (abstract class)
-	          |____________|                          |____________|
+               ____________                            ____________
+              |            |                          |            |
+        	  | SockHelper |         (abstract class) | I_RWHelper |
+              |____________|                          |____________|
                 |        |                              |        |
                 |        |                              |        |
    ________________     ________________     ______________    ______________
@@ -138,7 +139,7 @@ The classes in SockHelper.h encapsulate common used socket operation (create, bi
            |      \                     \   /                  |
            |        \                     /                    |
            |          \                 /  \                   |
-   ________|__________  \_____________/___  \__________________|_
+   ________|__________  \_____________/___  _\_________________|_
   |                  | |                  | |                   |
   | TCPHelper_Listen | | TCPHelper_SendTo | |      UDPHelper    |
   |__________________| |_________________ | |___________________|
