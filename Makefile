@@ -1,14 +1,17 @@
 CC = g++ 
-CFLAGS = -std=c++11 -g
+CFLAGS = -std=c++11 -g -O2
 LIB_MYSQL = `mysql_config --cflags --include --libs` -L/usr/lib -L/usr/lib/mysql
 LIB_PTHREAD = -lpthread
 
-CPP_SRC = $(*.cpp)
-CPP_OBJ = $(%cpp, %o, $(CPP_SRC))
 
+test_cmysql:
+	$(CC) test_cmysql.cpp $(LIB_MYSQL) $(CFLAGS) -o test_cmysql.bin
 
-cmysql:
-	$(CC) test_c_mysql.cpp $(LIB_MYSQL) $(CFLAGS) -o test_c_mysql.bin
+test_sockhelper:
+	$(CC) SockHelper.h test_SockHelper_TCP_Server.cpp $(CFLAGS) -o test_SockHelper_TCP_Server.bin
+	$(CC) SockHelper.h test_SockHelper_TCP_Client.cpp $(CFLAGS) -o test_SockHelper_TCP_Client.bin
+	$(CC) SockHelper.h test_SockHelper_UDP_Recv.cpp $(CFLAGS) -o test_SockHelper_UDP_Recv.bin
+	$(CC) SockHelper.h test_SockHelper_UDP_Send.cpp $(CFLAGS) -o test_SockHelper_UDP_Send.bin
 
 client:
 	$(CC) SockHelper.h client_multichat.cpp $(LIB_PTHREAD) $(CFLAGS) -o client_multichat.bin
