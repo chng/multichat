@@ -53,7 +53,7 @@ Model:
           }
 
 DAL:
-	  //this is a <b>singleton</b> class, thus it is shared by BLL classes.
+	      this is a <b>singleton</b> class, thus it is shared by BLL classes.
           class CMYSQL_Singleton
           {
                     
@@ -120,6 +120,29 @@ main loop:
 	  		}
 	  	}
 	  }
+
+====================================================================
+
+The classes in SockHelper.h encapsulate common used socket operation (create, bind, listen. accept, read and write.). The classes are organized as follows:
+
+     	       ____________                            ____________
+	          |            |                          |            |
+	    	  | SockHelper |                          | I_RWHelper | (abstract class)
+	          |____________|                          |____________|
+                |        |                              |        |
+                |        |                              |        |
+   ________________     ________________     ______________    ______________
+  |                |   |                |   |              |  |              |
+  | SockHelper_TCP |   | SockHelper_UDP |   | RWHelper_TCP |  | RWHelper_UDP |
+  |________________|   |________________|   |______________|  |______________|
+           |      \                     \   /                  |
+           |        \                     /                    |
+           |          \                 /  \                   |
+   ________|__________  \_____________/___  \__________________|_
+  |                  | |                  | |                   |
+  | TCPHelper_Listen | | TCPHelper_SendTo | |      UDPHelper    |
+  |__________________| |_________________ | |___________________|
+
 
 ====================================================================
 
